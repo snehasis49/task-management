@@ -15,7 +15,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { tasksAPI, usersAPI } from '../utils/api';
 
 const CreateBug = () => {
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ const CreateBug = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/users');
+      const response = await usersAPI.getUsers();
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -60,18 +60,18 @@ const CreateBug = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('/bugs', formData);
-      setSuccess('Bug reported successfully!');
+      const response = await tasksAPI.createTask(formData);
+      setSuccess('Task created successfully!');
       setGeneratedTags(response.data.tags || []);
-      
+
       // Redirect after a short delay
       setTimeout(() => {
         navigate('/bugs');
       }, 2000);
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to create bug report');
+      setError(error.response?.data?.detail || 'Failed to create task');
     }
-    
+
     setLoading(false);
   };
 

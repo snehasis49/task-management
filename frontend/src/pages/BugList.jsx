@@ -41,7 +41,7 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { tasksAPI } from '../utils/api';
 
 const BugList = () => {
   const navigate = useNavigate();
@@ -67,9 +67,9 @@ const BugList = () => {
 
   const fetchBugs = async () => {
     try {
-      const response = await axios.get('/bugs');
+      const response = await tasksAPI.getTasks();
       setBugs(response.data);
-      
+
       // Extract all unique tags
       const tags = new Set();
       response.data.forEach(bug => {
@@ -78,7 +78,7 @@ const BugList = () => {
         }
       });
       setAllTags(Array.from(tags));
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching bugs:', error);
@@ -126,7 +126,7 @@ const BugList = () => {
   const handleDeleteBug = async (bugId) => {
     if (window.confirm('Are you sure you want to delete this bug?')) {
       try {
-        await axios.delete(`/bugs/${bugId}`);
+        await tasksAPI.deleteTask(bugId);
         fetchBugs(); // Refresh the list
       } catch (error) {
         console.error('Error deleting bug:', error);
@@ -172,7 +172,7 @@ const BugList = () => {
   };
 
   const renderBugCard = (bug) => (
-    <Fade in={true} key={bug._id}>
+    <Fade in={true} key={bug.id || bug._id}>
       <Paper
         elevation={0}
         sx={{
@@ -189,7 +189,7 @@ const BugList = () => {
             transform: 'translateY(-2px)',
           },
         }}
-        onClick={() => navigate(`/bugs/${bug._id}`)}
+        onClick={() => navigate(`/bugs/${bug.id || bug._id}`)}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
@@ -229,7 +229,7 @@ const BugList = () => {
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/bugs/${bug._id}`);
+                  navigate(`/bugs/${bug.id || bug._id}`);
                 }}
               >
                 <Visibility />
@@ -240,7 +240,7 @@ const BugList = () => {
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/bugs/${bug._id}`); // Will handle edit in detail page
+                  navigate(`/bugs/${bug.id || bug._id}`); // Will handle edit in detail page
                 }}
               >
                 <Edit />
@@ -252,7 +252,7 @@ const BugList = () => {
                 color="error"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDeleteBug(bug._id);
+                  handleDeleteBug(bug.id || bug._id);
                 }}
               >
                 <Delete />
@@ -434,8 +434,8 @@ const BugList = () => {
           </Button>
         </Box>
 
-          {/* Stats Summary */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Stats Summary */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={6} sm={3}>
               <Card
                 sx={{
@@ -526,8 +526,7 @@ const BugList = () => {
                 </Typography>
               </Card>
             </Grid>
-          </Grid>
-        </Box>
+        </Grid>
 
         {/* Search and Filters */}
         <Paper
@@ -640,7 +639,7 @@ const BugList = () => {
       ) : (
         <Grid container spacing={3}>
           {filteredBugs.map((bug) => (
-            <Grid item xs={12} md={6} lg={4} key={bug._id}>
+            <Grid item xs={12} md={6} lg={4} key={bug.id || bug._id}>
               {renderBugCard(bug)}
             </Grid>
           ))}
@@ -686,7 +685,7 @@ const BugList = () => {
             <AccordionDetails sx={{ p: 2 }}>
               <Grid container spacing={2}>
                 {severityBugs.map((bug) => (
-                  <Grid item xs={12} md={6} lg={4} key={bug._id}>
+                  <Grid item xs={12} md={6} lg={4} key={bug.id || bug._id}>
                     {renderBugCard(bug)}
                   </Grid>
                 ))}

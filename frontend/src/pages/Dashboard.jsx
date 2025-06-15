@@ -29,7 +29,8 @@ import {
   ArrowDownward,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { tasksAPI } from '../utils/api';
+import KanbanBoard from '../components/KanbanBoard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get('/bugs');
+      const response = await tasksAPI.getTasks();
       const bugs = response.data;
 
       // Calculate stats
@@ -65,7 +66,7 @@ const Dashboard = () => {
       };
 
       setStats(newStats);
-      setRecentBugs(bugs.slice(0, 6)); // Get 6 most recent bugs
+      setRecentBugs(bugs); // Get all bugs for kanban
       setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -117,43 +118,13 @@ const Dashboard = () => {
 
   const completionRate = stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0;
 
-  // Group bugs by status for kanban
-  const kanbanColumns = [
-    {
-      title: 'Open',
-      status: 'Open',
-      color: 'error',
-      bugs: recentBugs.filter(bug => bug.status === 'Open'),
-      icon: <ErrorOutline />
-    },
-    {
-      title: 'In Progress',
-      status: 'In Progress',
-      color: 'warning',
-      bugs: recentBugs.filter(bug => bug.status === 'In Progress'),
-      icon: <Timeline />
-    },
-    {
-      title: 'Resolved',
-      status: 'Resolved',
-      color: 'success',
-      bugs: recentBugs.filter(bug => bug.status === 'Resolved'),
-      icon: <CheckCircle />
-    },
-    {
-      title: 'Closed',
-      status: 'Closed',
-      color: 'default',
-      bugs: recentBugs.filter(bug => bug.status === 'Closed'),
-      icon: <Assignment />
-    }
-  ];
-
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: theme.palette.mode === 'light'
+          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          : 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
         p: { xs: 2, md: 4 },
       }}
     >
@@ -441,158 +412,14 @@ const Dashboard = () => {
               textShadow: '0 2px 4px rgba(0,0,0,0.3)',
             }}
           >
-            Project Status Board
+            Interactive Task Board
           </Typography>
 
-          <Grid container spacing={3}>
-            {kanbanColumns.map((column) => (
-              <Grid item xs={12} md={3} key={column.status}>
-                <Card
-                  sx={{
-                    background: 'rgba(255, 255, 255, 0.98)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: 3,
-                    border: 'none',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    minHeight: '600px',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 0 }}>
-                    {/* Column Header */}
-                    <Box
-                      sx={{
-                        p: 3,
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
-                        background: `linear-gradient(135deg, ${
-                          column.color === 'error' ? '#ff6b6b' :
-                          column.color === 'warning' ? '#ffa726' :
-                          column.color === 'success' ? '#66bb6a' :
-                          '#667eea'
-                        } 0%, ${
-                          column.color === 'error' ? '#ee5a52' :
-                          column.color === 'warning' ? '#ff9800' :
-                          column.color === 'success' ? '#4caf50' :
-                          '#764ba2'
-                        } 100%)`,
-                        color: 'white',
-                        borderRadius: '12px 12px 0 0',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Box sx={{ mr: 2 }}>
-                            {column.icon}
-                          </Box>
-                          <Typography variant="h6" fontWeight="bold">
-                            {column.title}
-                          </Typography>
-                        </Box>
-                        <Chip
-                          label={column.bugs.length}
-                          size="small"
-                          sx={{
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            color: 'white',
-                            fontWeight: 'bold',
-                          }}
-                        />
-                      </Box>
-                    </Box>
-
-                    {/* Bug Cards */}
-                    <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {column.bugs.map((bug) => (
-                        <Card
-                          key={bug._id}
-                          elevation={0}
-                          sx={{
-                            cursor: 'pointer',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              borderColor: 'primary.main',
-                              transform: 'translateY(-2px)',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            },
-                          }}
-                          onClick={() => navigate(`/bugs/${bug._id}`)}
-                        >
-                          <CardContent sx={{ p: 2.5 }}>
-                            <Typography
-                              variant="subtitle2"
-                              fontWeight="600"
-                              gutterBottom
-                              sx={{
-                                fontSize: '0.9rem',
-                                lineHeight: 1.3,
-                              }}
-                            >
-                              {bug.title}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                mb: 2,
-                                fontSize: '0.8rem',
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {bug.description}
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Chip
-                                label={bug.severity}
-                                size="small"
-                                color={getSeverityColor(bug.severity)}
-                                sx={{ fontSize: '0.7rem', height: 20 }}
-                              />
-                              {bug.assignedTo && (
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                  {bug.assignedTo.name}
-                                </Typography>
-                              )}
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      ))}
-
-                      {column.bugs.length === 0 && (
-                        <Box
-                          sx={{
-                            p: 4,
-                            textAlign: 'center',
-                            color: 'text.secondary',
-                            border: '2px dashed',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            bgcolor: 'grey.50',
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                            No {column.title.toLowerCase()} issues
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          <KanbanBoard
+            tasks={recentBugs}
+            onTaskUpdate={fetchDashboardData}
+            loading={loading}
+          />
         </Box>
 
         {/* Quick Actions */}
