@@ -13,6 +13,8 @@ import {
   Divider,
   Card,
   CardContent,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   BugReport,
@@ -29,6 +31,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -80,21 +83,44 @@ const Register = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: theme.palette.mode === 'light'
+          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.primary.main, 0.2)} 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: theme.palette.mode === 'dark'
+            ? `radial-gradient(circle at 20% 80%, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 50%),
+               radial-gradient(circle at 80% 20%, ${alpha(theme.palette.secondary.main, 0.15)} 0%, transparent 50%)`
+            : 'none',
+          pointerEvents: 'none',
+        },
       }}
     >
       <Container maxWidth="sm">
         <Card
-          elevation={24}
+          elevation={theme.palette.mode === 'light' ? 24 : 8}
           sx={{
             borderRadius: 4,
             overflow: 'hidden',
             backdropFilter: 'blur(20px)',
-            background: 'rgba(255, 255, 255, 0.95)',
+            background: theme.palette.mode === 'light'
+              ? 'rgba(255, 255, 255, 0.95)'
+              : alpha(theme.palette.background.paper, 0.95),
+            border: theme.palette.mode === 'dark'
+              ? `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+              : 'none',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
@@ -107,8 +133,13 @@ const Register = () => {
                   width: 80,
                   height: 80,
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: theme.palette.mode === 'light'
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                   mb: 3,
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`
+                    : '0 8px 32px rgba(102, 126, 234, 0.3)',
                 }}
               >
                 <BugReport sx={{ fontSize: 40, color: 'white' }} />
@@ -249,9 +280,21 @@ const Register = () => {
                 sx={{
                   py: 1.5,
                   mb: 3,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: theme.palette.mode === 'light'
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                    background: theme.palette.mode === 'light'
+                      ? 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)'
+                      : `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
+                    transform: 'translateY(-1px)',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? `0 8px 25px ${alpha(theme.palette.primary.main, 0.4)}`
+                      : '0 8px 25px rgba(102, 126, 234, 0.4)',
+                  },
+                  '&:disabled': {
+                    background: theme.palette.action.disabledBackground,
+                    color: theme.palette.action.disabled,
                   },
                 }}
               >

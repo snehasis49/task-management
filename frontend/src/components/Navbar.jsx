@@ -22,7 +22,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  BugReport,
+  Assignment,
   AccountCircle,
   Add,
   List as ListIcon,
@@ -69,8 +69,8 @@ const Navbar = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'All Bugs', icon: <ListIcon />, path: '/bugs' },
-    { text: 'New Bug', icon: <Add />, path: '/bugs/new' },
+    { text: 'All Tasks', icon: <ListIcon />, path: '/bugs' },
+    { text: 'New Task', icon: <Add />, path: '/bugs/new' },
   ];
 
   const isActivePath = (path) => {
@@ -82,9 +82,9 @@ const Navbar = () => {
   const drawer = (
     <Box sx={{ width: 280 }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <BugReport color="primary" sx={{ fontSize: 32 }} />
+        <Assignment color="primary" sx={{ fontSize: 32 }} />
         <Typography variant="h6" fontWeight="bold" color="primary">
-          Bug Tracker
+          Task Management
         </Typography>
       </Box>
       <Divider />
@@ -174,9 +174,9 @@ const Navbar = () => {
           )}
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
-            <BugReport color="primary" sx={{ fontSize: 32 }} />
+            <Assignment color="primary" sx={{ fontSize: 32 }} />
             <Typography variant="h6" fontWeight="bold" color="primary">
-              Bug Tracker
+              Task Management
             </Typography>
           </Box>
 

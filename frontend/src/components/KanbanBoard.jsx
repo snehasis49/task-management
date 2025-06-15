@@ -27,7 +27,7 @@ import {
   Assignment,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { tasksAPI } from '../utils/api';
+import axios from 'axios';
 
 const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
   const theme = useTheme();
@@ -97,10 +97,17 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
     if (destination.droppableId === source.droppableId) return;
 
     const newStatus = destination.droppableId;
-
+    
     try {
-      await tasksAPI.updateTask(draggableId, { status: newStatus });
-
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `http://localhost:8000/api/tasks/${draggableId}`,
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
       // Call parent component to refresh tasks
       if (onTaskUpdate) {
         onTaskUpdate();
@@ -111,7 +118,7 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
   };
 
   const TaskCard = ({ task, index }) => (
-    <Draggable draggableId={task.id || task._id} index={index}>
+    <Draggable draggableId={task._id} index={index}>
       {(provided, snapshot) => (
         <Card
           ref={provided.innerRef}
@@ -206,7 +213,7 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
     return (
       <Grid container spacing={3}>
         {columns.map((column) => (
-          <Grid item xs={12} md={3} key={column.id}>
+          <Grid size={{ xs: 12, md: 3 }} key={column.id}>
             <Card sx={{ minHeight: 600 }}>
               <CardContent>
                 <Skeleton variant="text" sx={{ fontSize: '1.5rem', mb: 2 }} />
@@ -228,7 +235,7 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
           const columnTasks = tasks.filter(task => task.status === column.id);
           
           return (
-            <Grid item xs={12} md={3} key={column.id}>
+            <Grid size={{ xs: 12, md: 3 }} key={column.id}>
               <Card
                 sx={{
                   minHeight: 600,
@@ -267,7 +274,7 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
                         }}
                       >
                         {columnTasks.map((task, index) => (
-                          <TaskCard key={task.id || task._id} task={task} index={index} />
+                          <TaskCard key={task._id} task={task} index={index} />
                         ))}
                         {provided.placeholder}
                       </Box>
@@ -287,14 +294,14 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => {
-          navigate(`/bugs/${selectedTask?.id || selectedTask?._id}`);
+          navigate(`/bugs/${selectedTask?._id}`);
           handleMenuClose();
         }}>
           <Visibility sx={{ mr: 1 }} />
           View Details
         </MenuItem>
         <MenuItem onClick={() => {
-          navigate(`/bugs/${selectedTask?.id || selectedTask?._id}`);
+          navigate(`/bugs/${selectedTask?._id}`);
           handleMenuClose();
         }}>
           <Edit sx={{ mr: 1 }} />

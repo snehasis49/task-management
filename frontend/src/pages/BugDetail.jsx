@@ -230,7 +230,7 @@ const BugDetail = () => {
         </Box>
 
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             {editing ? (
               <TextField
                 fullWidth
@@ -250,7 +250,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             {editing ? (
               <TextField
                 fullWidth
@@ -274,7 +274,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             {editing ? (
               <FormControl fullWidth margin="normal">
                 <InputLabel>Severity</InputLabel>
@@ -304,7 +304,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             {editing ? (
               <FormControl fullWidth margin="normal">
                 <InputLabel>Status</InputLabel>
@@ -334,7 +334,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             {editing ? (
               <FormControl fullWidth margin="normal">
                 <InputLabel>Assigned To</InputLabel>
@@ -367,7 +367,7 @@ const BugDetail = () => {
           </Grid>
 
           {bug.tags && bug.tags.length > 0 && (
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="h6" gutterBottom>
                 Tags
               </Typography>
@@ -384,7 +384,7 @@ const BugDetail = () => {
             </Grid>
           )}
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="body2" color="text.secondary">
               Created: {new Date(bug.created_at).toLocaleString()}

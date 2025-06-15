@@ -7,7 +7,7 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import BugList from './pages/BugList';
+import TaskList from './pages/BugList';
 import CreateBug from './pages/CreateBug';
 import BugDetail from './pages/BugDetail';
 
@@ -28,8 +28,7 @@ function AppLayout({ children }) {
         sx={{
           flexGrow: 1,
           bgcolor: 'background.default',
-          pt: { xs: 2, sm: 3 },
-          pb: { xs: 2, sm: 4 },
+          width: '100%',
         }}
       >
         {children}
@@ -56,7 +55,7 @@ function App() {
             <Route path="/bugs" element={
               <ProtectedRoute>
                 <AppLayout>
-                  <BugList />
+                  <TaskList />
                 </AppLayout>
               </ProtectedRoute>
             } />
