@@ -19,9 +19,10 @@ import {
   useTheme,
   useMediaQuery,
   Badge,
+  Tooltip,
 } from '@mui/material';
 import {
-  BugReport,
+  Assignment,
   AccountCircle,
   Add,
   List as ListIcon,
@@ -30,15 +31,19 @@ import {
   Close as CloseIcon,
   Logout,
   Person,
+  LightMode,
+  DarkMode,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const theme = useTheme();
+  const { mode, toggleColorMode } = useCustomTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -64,8 +69,8 @@ const Navbar = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'All Bugs', icon: <ListIcon />, path: '/bugs' },
-    { text: 'New Bug', icon: <Add />, path: '/bugs/new' },
+    { text: 'All Tasks', icon: <ListIcon />, path: '/bugs' },
+    { text: 'New Task', icon: <Add />, path: '/bugs/new' },
   ];
 
   const isActivePath = (path) => {
@@ -77,9 +82,9 @@ const Navbar = () => {
   const drawer = (
     <Box sx={{ width: 280 }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <BugReport color="primary" sx={{ fontSize: 32 }} />
+        <Assignment color="primary" sx={{ fontSize: 32 }} />
         <Typography variant="h6" fontWeight="bold" color="primary">
-          Bug Tracker
+          Task Management
         </Typography>
       </Box>
       <Divider />
@@ -169,9 +174,9 @@ const Navbar = () => {
           )}
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
-            <BugReport color="primary" sx={{ fontSize: 32 }} />
+            <Assignment color="primary" sx={{ fontSize: 32 }} />
             <Typography variant="h6" fontWeight="bold" color="primary">
-              Bug Tracker
+              Task Management
             </Typography>
           </Box>
 
@@ -198,7 +203,22 @@ const Navbar = () => {
           )}
 
           {!isMobile && (
-            <Box sx={{ ml: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+              <Tooltip title={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}>
+                <IconButton
+                  onClick={toggleColorMode}
+                  color="inherit"
+                  sx={{
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'rotate(180deg)',
+                    },
+                  }}
+                >
+                  {mode === 'light' ? <DarkMode /> : <LightMode />}
+                </IconButton>
+              </Tooltip>
+
               <IconButton
                 size="large"
                 aria-label="account menu"

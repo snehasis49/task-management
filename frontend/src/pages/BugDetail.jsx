@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { Edit, Save, Cancel, Delete, ArrowBack } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { tasksAPI, usersAPI } from '../utils/api';
 
 const BugDetail = () => {
   const { id } = useParams();
@@ -39,25 +39,20 @@ const BugDetail = () => {
 
   const fetchBug = async () => {
     try {
-      const response = await axios.get(`/bugs`);
-      const foundBug = response.data.find(b => b._id === id);
-      if (foundBug) {
-        setBug(foundBug);
-        setEditData(foundBug);
-      } else {
-        setError('Bug not found');
-      }
+      const response = await tasksAPI.getTask(id);
+      setBug(response.data);
+      setEditData(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching bug:', error);
-      setError('Failed to load bug details');
+      console.error('Error fetching task:', error);
+      setError('Failed to load task details');
       setLoading(false);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/users');
+      const response = await usersAPI.getUsers();
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -79,26 +74,26 @@ const BugDetail = () => {
   const handleSave = async () => {
     setSaving(true);
     setError('');
-    
+
     try {
-      const response = await axios.put(`/bugs/${id}`, editData);
+      const response = await tasksAPI.updateTask(id, editData);
       setBug(response.data);
       setEditing(false);
-      setSuccess('Bug updated successfully!');
+      setSuccess('Task updated successfully!');
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to update bug');
+      setError(error.response?.data?.detail || 'Failed to update task');
     }
-    
+
     setSaving(false);
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this bug? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
       try {
-        await axios.delete(`/bugs/${id}`);
+        await tasksAPI.deleteTask(id);
         navigate('/bugs');
       } catch (error) {
-        setError('Failed to delete bug');
+        setError('Failed to delete task');
       }
     }
   };
@@ -235,7 +230,7 @@ const BugDetail = () => {
         </Box>
 
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             {editing ? (
               <TextField
                 fullWidth
@@ -255,7 +250,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             {editing ? (
               <TextField
                 fullWidth
@@ -279,7 +274,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             {editing ? (
               <FormControl fullWidth margin="normal">
                 <InputLabel>Severity</InputLabel>
@@ -309,7 +304,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             {editing ? (
               <FormControl fullWidth margin="normal">
                 <InputLabel>Status</InputLabel>
@@ -339,7 +334,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             {editing ? (
               <FormControl fullWidth margin="normal">
                 <InputLabel>Assigned To</InputLabel>
@@ -372,7 +367,7 @@ const BugDetail = () => {
           </Grid>
 
           {bug.tags && bug.tags.length > 0 && (
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="h6" gutterBottom>
                 Tags
               </Typography>
@@ -389,7 +384,7 @@ const BugDetail = () => {
             </Grid>
           )}
 
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="body2" color="text.secondary">
               Created: {new Date(bug.created_at).toLocaleString()}

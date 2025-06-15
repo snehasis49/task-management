@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Paper,
   TextField,
   Button,
@@ -15,7 +14,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { tasksAPI, usersAPI } from '../utils/api';
 
 const CreateBug = () => {
   const navigate = useNavigate();
@@ -39,7 +38,7 @@ const CreateBug = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/users');
+      const response = await usersAPI.getUsers();
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -60,18 +59,18 @@ const CreateBug = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('/bugs', formData);
-      setSuccess('Bug reported successfully!');
+      const response = await tasksAPI.createTask(formData);
+      setSuccess('Task created successfully!');
       setGeneratedTags(response.data.tags || []);
-      
+
       // Redirect after a short delay
       setTimeout(() => {
         navigate('/bugs');
       }, 2000);
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to create bug report');
+      setError(error.response?.data?.detail || 'Failed to create task');
     }
-    
+
     setLoading(false);
   };
 
@@ -82,30 +81,27 @@ const CreateBug = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        p: 3,
+        p: 4,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        width: '100%',
       }}
     >
-      <Container maxWidth="md">
+      <Box sx={{ maxWidth: 'md', width: '100%' }}>
         <Paper
           elevation={0}
           sx={{
             p: { xs: 3, sm: 5 },
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: 4,
           }}
         >
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h3" fontWeight="bold" gutterBottom>
-              Report a Bug
+            <Typography variant="h3" fontWeight="800" gutterBottom color="text.primary">
+              Create New Task
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Help us improve by reporting issues you encounter
+              Add a new task to your project management system
             </Typography>
           </Box>
 
@@ -137,12 +133,12 @@ const CreateBug = () => {
           <TextField
             fullWidth
             required
-            label="Bug Title"
+            label="Task Title"
             name="title"
             value={formData.title}
             onChange={handleChange}
             margin="normal"
-            placeholder="Brief description of the bug"
+            placeholder="Brief description of the task"
           />
 
           <TextField
@@ -155,17 +151,17 @@ const CreateBug = () => {
             value={formData.description}
             onChange={handleChange}
             margin="normal"
-            placeholder="Detailed description of the bug, steps to reproduce, expected vs actual behavior"
+            placeholder="Detailed description of the task, requirements, and acceptance criteria"
           />
 
           <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
             <FormControl fullWidth>
-              <InputLabel>Severity</InputLabel>
+              <InputLabel>Priority</InputLabel>
               <Select
                 name="severity"
                 value={formData.severity}
                 onChange={handleChange}
-                label="Severity"
+                label="Priority"
               >
                 {severityOptions.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -218,7 +214,7 @@ const CreateBug = () => {
               disabled={loading}
               sx={{ minWidth: 120 }}
             >
-              {loading ? <CircularProgress size={24} /> : 'Report Bug'}
+              {loading ? <CircularProgress size={24} /> : 'Create Task'}
             </Button>
             
             <Button
@@ -231,7 +227,7 @@ const CreateBug = () => {
           </Box>
         </Box>
         </Paper>
-      </Container>
+      </Box>
     </Box>
   );
 };
