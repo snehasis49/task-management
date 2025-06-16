@@ -76,9 +76,10 @@ This Task Management System is a full-stack web application designed for efficie
 
 ### Frontend
 - **React 19.1.0** - Modern JavaScript library for building user interfaces
-- **Vite 6.3.5** - Fast build tool and development server
+- **Vite 6.3.5** - Fast build tool and development server (replaces Node.js build tools)
 - **Material-UI 7.1.1** - React component library with Material Design
 - **React Router 7.6.2** - Declarative routing for React
+- **Redux Toolkit 2.8.2** - State management for React
 - **Axios 1.10.0** - Promise-based HTTP client
 - **@hello-pangea/dnd 18.0.1** - Drag and drop library
 
@@ -86,15 +87,20 @@ This Task Management System is a full-stack web application designed for efficie
 - **FastAPI 0.104.1** - Modern, fast web framework for building APIs
 - **Uvicorn 0.24.0** - ASGI server implementation
 - **PyMongo 4.5.0** - Python driver for MongoDB
-- **Pydantic 2.5.0** - Data validation using Python type annotations
+- **Pydantic 2.11.7** - Data validation using Python type annotations
 - **Python-JOSE 3.3.0** - JavaScript Object Signing and Encryption library
 - **Passlib 1.7.4** - Password hashing library
+- **LangChain 0.3.7** - Framework for developing AI applications
+- **LangChain-Groq 0.2.1** - Groq integration for LangChain
 
 ### Database & AI
 - **MongoDB** - NoSQL document database
-- **Groq AI 0.4.1** - AI service for intelligent task analysis
+- **Groq AI 0.14.0** - AI service for intelligent task analysis
+- **Sentence Transformers 2.2.2** - For text embeddings and semantic search
+- **Scikit-learn 1.3.0** - Machine learning utilities
 
 ### Development Tools
+- **Vite** - Fast build tool and development server (no Node.js runtime needed)
 - **ESLint** - JavaScript linting utility
 - **Python-dotenv** - Environment variable management
 - **CORS** - Cross-Origin Resource Sharing support
@@ -155,7 +161,7 @@ task-management/
 │   │   ├── main.jsx                # Application entry point
 │   │   └── index.css               # Global styles
 │   ├── index.html                  # HTML template
-│   ├── package.json                # Node.js dependencies
+│   ├── package.json                # Frontend dependencies
 │   ├── vite.config.js              # Vite configuration
 │   └── eslint.config.js            # ESLint configuration
 ├── setup.bat                       # Windows setup script
@@ -172,7 +178,6 @@ Before you begin, ensure you have the following installed on your system:
 
 | Software | Version | Purpose | Download Link |
 |----------|---------|---------|---------------|
-| **Node.js** | 18.0+ | Frontend development | [Download](https://nodejs.org/) |
 | **Python** | 3.8+ | Backend development | [Download](https://python.org/) |
 | **MongoDB** | 4.4+ | Database | [Download](https://mongodb.com/try/download/community) |
 | **Git** | Latest | Version control | [Download](https://git-scm.com/) |
@@ -325,10 +330,10 @@ The backend will run on `http://localhost:8000`
 # Navigate to frontend directory (open new terminal)
 cd frontend
 
-# Install Node.js dependencies
+# Install dependencies using npm (comes with Python/system package managers)
 npm install
 
-# Start development server
+# Start Vite development server
 npm run dev
 ```
 
@@ -672,9 +677,13 @@ ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Here's how you can help:
+We welcome contributions from the community! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed guidelines.
 
-### Getting Started
+### 🚨 Important Notice
+**Attribution to Snehasis Santra is required in forks and derivative works.**
+**Project name must not be renamed without permission.**
+
+### Quick Start for Contributors
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally
 3. **Create a feature branch** from `main`
@@ -682,38 +691,12 @@ We welcome contributions from the community! Here's how you can help:
 5. **Test thoroughly** before submitting
 6. **Submit a pull request** with detailed description
 
-### Development Guidelines
-
-#### Code Style
-- **Backend**: Follow PEP 8 Python style guide
-- **Frontend**: Use ESLint configuration provided
-- **Commits**: Use conventional commit messages
-- **Documentation**: Update README and code comments
-
-#### Pull Request Process
-1. Ensure all tests pass
-2. Update documentation if needed
-3. Add tests for new features
-4. Request review from maintainers
-5. Address feedback promptly
-
-### Reporting Issues
-- Use GitHub Issues for bug reports
-- Provide detailed reproduction steps
-- Include system information and logs
-- Use appropriate issue templates
+For detailed contribution guidelines, development setup, and attribution requirements, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-### MIT License Summary
-- ✅ Commercial use
-- ✅ Modification
-- ✅ Distribution
-- ✅ Private use
-- ❌ Liability
-- ❌ Warranty
+MIT © [Snehasis Santra](https://github.com/snehasis49)
+Attribution must be retained.
 
 ## 🙏 Acknowledgments
 
