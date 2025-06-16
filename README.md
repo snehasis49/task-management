@@ -30,11 +30,11 @@ This Task Management System is a full-stack web application designed for efficie
 ### Key Highlights
 
 - **Modern UI/UX**: Professional interface with dark/light mode support
-- **Real-time Updates**: Live task status updates and notifications
-- **AI-Powered**: Automatic tag generation and task categorization
+- **AI-Powered**: Automatic tag generation and intelligent search with RAG
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 - **Secure Authentication**: JWT-based authentication with protected routes
 - **Comprehensive Logging**: Daily rotating logs with 7-day retention
+- **Semantic Search**: RAG-based search using embeddings and vector similarity
 
 ## ✨ Features
 
@@ -50,27 +50,31 @@ This Task Management System is a full-stack web application designed for efficie
 - Task priority levels (Low, Medium, High, Critical)
 - Status tracking (Open, In Progress, Resolved, Closed)
 - User assignment functionality
-- Due date management
-- Task categorization with tags
+- Rich text descriptions with HTML support
+- AI-generated task categorization with tags
+- Multiple search types (keyword, semantic, hybrid, intelligent)
 
 ### 🤖 AI-Powered Features
-- Automatic tag generation using Groq AI
-- Intelligent task categorization
-- Smart task analysis and suggestions
+- Automatic tag generation using LangChain + Groq AI
+- AI-powered description generation from task titles
+- RAG-based semantic search with embeddings
+- Intelligent search with query enhancement
+- Fallback systems when AI services are unavailable
 
 ### 🎨 User Interface
-- Professional Material-UI design
+- Professional Material-UI design with Poppins font
 - Dark/light mode toggle
 - Responsive layout for all devices
 - Drag-and-drop Kanban board
-- Advanced filtering and search
-- Real-time statistics dashboard
+- Advanced filtering and semantic search
+- Rich text editor with HTML output
+- Toast notifications throughout the app
 
-### 📈 Analytics & Reporting
-- Task statistics and metrics
-- Progress tracking
-- Visual charts and graphs
-- Export functionality
+### 📊 Logging & Monitoring
+- Comprehensive logging system with daily rotation
+- Log statistics and monitoring endpoints
+- Multiple log types (app, error, access, database, auth)
+- Log cleanup and management tools
 
 ## 🛠️ Tech Stack
 
@@ -207,7 +211,7 @@ Before you begin, ensure you have the following installed on your system:
 For Windows users:
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/task-management.git
+git clone https://github.com/snehasis49/task-management.git
 cd task-management
 
 # Run automated setup
@@ -217,7 +221,7 @@ setup.bat
 For macOS/Linux users:
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/task-management.git
+git clone https://github.com/snehasis49/task-management.git
 cd task-management
 
 # Make setup script executable and run
@@ -229,7 +233,7 @@ chmod +x setup.sh
 
 #### 1. Clone Repository
 ```bash
-git clone https://github.com/your-username/task-management.git
+git clone https://github.com/snehasis49/task-management.git
 cd task-management
 ```
 
@@ -381,10 +385,10 @@ The frontend automatically connects to the backend API. If you need to change th
 ### Dashboard Overview
 
 The dashboard provides:
-- **Task Statistics**: Total, Open, In Progress, Completed tasks
-- **Recent Tasks**: Latest task activities
+- **AI-Powered Search**: Semantic search with query enhancement
+- **Task Board**: Kanban-style drag-and-drop task management
+- **Advanced Filtering**: Filter tasks by status, priority, tags
 - **Quick Actions**: Create new tasks, view all tasks
-- **Kanban Board**: Drag-and-drop task management
 
 ### Task Management
 
@@ -412,15 +416,17 @@ The dashboard provides:
 #### AI-Powered Features (LangChain + Groq)
 - **Smart Tagging**: LangChain with Groq AI automatically analyzes task content and generates relevant tags for categorization
 - **Description Generation**: AI-powered description generator creates detailed task descriptions based on titles using Llama models
+- **Semantic Search**: RAG-based search using SentenceTransformer embeddings stored in MongoDB
+- **Query Enhancement**: AI improves search queries for better results
 - **Intelligent Templates**: Fallback system provides structured templates when AI is unavailable
 - **Modern Architecture**: Uses LangChain framework for better AI integration and reliability
-- Helps with task organization, filtering, and content creation
 
-#### Search and Filtering
-- **Text Search**: Search by title or description
-- **Status Filter**: Filter by Open, In Progress, etc.
-- **Tag Filter**: Click tags to filter tasks
-- **Priority Filter**: Filter by task priority
+#### Advanced Search and Filtering
+- **Semantic Search**: AI-powered search using embeddings and vector similarity
+- **Keyword Search**: Traditional text-based search with regex patterns
+- **Hybrid Search**: Combines semantic and keyword search for best results
+- **Intelligent Search**: AI-enhanced queries with suggestions
+- **Advanced Filtering**: Filter by status, priority, tags, and user assignments
 
 #### Theme Customization
 - Toggle between light and dark modes
@@ -446,8 +452,9 @@ The dashboard provides:
 | `GET` | `/api/tasks/{id}` | Get task by ID | ✅ |
 | `PUT` | `/api/tasks/{id}` | Update task | ✅ |
 | `DELETE` | `/api/tasks/{id}` | Delete task | ✅ |
-| `GET` | `/api/tasks/stats` | Get task statistics | ✅ |
+| `GET` | `/api/tasks/search` | AI-powered search (semantic, keyword, hybrid, intelligent) | ✅ |
 | `POST` | `/api/tasks/generate-description` | Generate AI description | ✅ |
+| `POST` | `/api/tasks/generate-tags` | Generate AI tags | ✅ |
 
 ### User Management Endpoints
 
@@ -463,7 +470,10 @@ The dashboard provides:
 |--------|----------|-------------|
 | `GET` | `/health` | Health check |
 | `GET` | `/docs` | API documentation |
-| `GET` | `/api/logs` | Get application logs |
+| `GET` | `/api/logs/files` | List available log files |
+| `GET` | `/api/logs/view/{log_type}` | View log file contents |
+| `GET` | `/api/logs/stats` | Get log statistics |
+| `DELETE` | `/api/logs/cleanup` | Cleanup old log files |
 
 ## 🏗️ Architecture
 
@@ -661,7 +671,7 @@ ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 - [ ] **Comments System**: Discussion threads for tasks
 - [ ] **Advanced Analytics**: Charts, reports, and insights
 - [ ] **Team Management**: Role-based access control
-- [ ] **Integration APIs**: Slack, Discord, email notifications
+- [ ] **Integration APIs**: Slack, email notifications
 - [ ] **Mobile App**: React Native mobile application
 - [ ] **Offline Support**: PWA with offline capabilities
 
@@ -716,9 +726,8 @@ Attribution must be retained.
 - **Email**: Contact the maintainers directly
 
 ### Community
-- **GitHub**: [Project Repository](https://github.com/your-username/task-management)
-- **Discord**: [Community Server](https://discord.gg/your-server)
-- **Twitter**: [@YourHandle](https://twitter.com/yourhandle)
+- **GitHub**: [Project Repository](https://github.com/snehasis49/task-management)
+- **X (Twitter)**: [@KibuMighty](https://x.com/KibuMighty)
 
 ---
 
