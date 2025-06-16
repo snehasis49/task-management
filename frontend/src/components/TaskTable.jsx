@@ -29,12 +29,16 @@ import {
   Assignment,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { ConfirmDialog, useConfirmDialog } from './common';
 
 const TaskTable = ({ tasks, onTaskUpdate, onTaskDelete }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  // Confirm dialog hook
+  const { showDeleteConfirm, dialogProps } = useConfirmDialog();
 
   const handleMenuOpen = (event, task) => {
     setAnchorEl(event.currentTarget);
@@ -54,8 +58,16 @@ const TaskTable = ({ tasks, onTaskUpdate, onTaskDelete }) => {
   };
 
   const handleDelete = () => {
-    if (selectedTask && onTaskDelete) {
-      onTaskDelete(selectedTask.id || selectedTask._id);
+    if (selectedTask) {
+      showDeleteConfirm({
+        title: 'Delete Task',
+        message: `Are you sure you want to delete "${selectedTask.title}"? This action cannot be undone.`,
+        onConfirm: async () => {
+          if (onTaskDelete) {
+            await onTaskDelete(selectedTask.id || selectedTask._id);
+          }
+        }
+      });
     }
     handleMenuClose();
   };
@@ -282,6 +294,9 @@ const TaskTable = ({ tasks, onTaskUpdate, onTaskDelete }) => {
           Delete Task
         </MenuItem>
       </Menu>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog {...dialogProps} />
     </TableContainer>
   );
 };

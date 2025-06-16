@@ -1,58 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Typography,
   Box,
-  Card,
-  CardContent,
   Chip,
   Button,
   Tabs,
   Tab,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Menu,
-  MenuItem,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Paper,
   Avatar,
-  Skeleton,
   useTheme,
   alpha,
   Fade,
   Tooltip,
+  Typography,
+  IconButton,
+  TextField,
+  InputAdornment,
+  Card,
 } from '@mui/material';
 import { Grid } from '@mui/system';
 import {
   Add,
-  Search,
-  FilterList,
   Edit,
   Delete,
-  ExpandMore,
   Assignment,
   Schedule,
   Person,
-  LocalOffer,
-  MoreVert,
   Visibility,
   ViewModule,
   TableRows,
+  Search,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { tasksAPI } from '../utils/api';
 import TaskTable from '../components/TaskTable';
 import SearchBar from '../components/SearchBar';
 import FilterSection from '../components/FilterSection';
+import {
+  PageHeader,
+  SearchAndFilterSection,
+  TaskDisplaySection,
+  PageLoadingSkeleton,
+  useTaskFiltering
+} from '../components/common';
 
 const TaskList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const [tasks, setTasks] = useState([]);
-  const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
@@ -60,20 +55,21 @@ const TaskList = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchInfo, setSearchInfo] = useState(null);
-  const [activeFilters, setActiveFilters] = useState({});
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [allTags, setAllTags] = useState([]);
+
+  // Use the custom filtering hook
+  const {
+    filteredTasks,
+    showFilters: showAdvancedFilters,
+    handleFiltersChange,
+    activeFilters,
+    setActiveFilters
+  } = useTaskFiltering(tasks);
 
   useEffect(() => {
     setLoading(true);
     fetchTasks();
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (tasks.length > 0) {
-      filterTasks();
-    }
-  }, [tasks, searchTerm, selectedTab, activeFilters]);
 
   const fetchTasks = async () => {
     try {
@@ -96,109 +92,18 @@ const TaskList = () => {
     }
   };
 
-  const filterTasks = () => {
-    let filtered = [...tasks];
-
-    // Apply search term from traditional search input
-    if (searchTerm) {
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    // Apply search term from FilterSection (takes priority over traditional search)
-    if (activeFilters.searchTerm) {
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(activeFilters.searchTerm.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(activeFilters.searchTerm.toLowerCase()))
-      );
-    }
-
-    // Apply status filter from FilterSection (takes priority over tabs)
-    if (activeFilters.status && activeFilters.status.length > 0) {
-      filtered = filtered.filter(task => activeFilters.status.includes(task.status));
-    } else {
-      // Only apply tab-based status filter if no FilterSection status filter is active
-      const statusFilters = ['All', 'Open', 'In Progress', 'Resolved', 'Closed'];
-      if (selectedTab > 0) {
-        const status = statusFilters[selectedTab];
-        filtered = filtered.filter(task => task.status === status);
-      }
-    }
-
-    // Apply severity filter from FilterSection
-    if (activeFilters.severity && activeFilters.severity.length > 0) {
-      filtered = filtered.filter(task => activeFilters.severity.includes(task.severity));
-    }
-
-    if (activeFilters.tags && activeFilters.tags.length > 0) {
-      filtered = filtered.filter(task =>
-        task.tags && activeFilters.tags.some(tag => task.tags.includes(tag))
-      );
-    }
-
-    if (activeFilters.assignedTo && activeFilters.assignedTo.length > 0) {
-      filtered = filtered.filter(task => {
-        const assignee = task.assigned_to || task.assignedTo;
-        if (activeFilters.assignedTo.includes('unassigned')) {
-          return !assignee || activeFilters.assignedTo.includes(assignee);
-        }
-        return assignee && activeFilters.assignedTo.includes(assignee);
-      });
-    }
-
-    // Apply date filters
-    if (activeFilters.createdDateFrom || activeFilters.createdDateTo) {
-      filtered = filtered.filter(task => {
-        const taskDate = new Date(task.createdAt || task.created_at);
-        if (activeFilters.createdDateFrom && taskDate < activeFilters.createdDateFrom) return false;
-        if (activeFilters.createdDateTo && taskDate > activeFilters.createdDateTo) return false;
-        return true;
-      });
-    }
-
-    if (activeFilters.updatedDateFrom || activeFilters.updatedDateTo) {
-      filtered = filtered.filter(task => {
-        const taskDate = new Date(task.updatedAt || task.updated_at);
-        if (activeFilters.updatedDateFrom && taskDate < activeFilters.updatedDateFrom) return false;
-        if (activeFilters.updatedDateTo && taskDate > activeFilters.updatedDateTo) return false;
-        return true;
-      });
-    }
-
-
-
-    setFilteredTasks(filtered);
-
-    // Check if any FilterSection filters are active
-    const hasActiveFilters = Object.keys(activeFilters).some(key => {
-      if (Array.isArray(activeFilters[key])) {
-        return activeFilters[key].length > 0;
-      }
-      return activeFilters[key] && activeFilters[key] !== '';
-    });
-
-    setShowAdvancedFilters(hasActiveFilters);
-  };
-
-  const handleFiltersChange = (filters) => {
-    setActiveFilters(filters);
-  };
-
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
       try {
         await tasksAPI.deleteTask(taskId);
         fetchTasks(); // Refresh the list
       } catch (error) {
         console.error('Error deleting task:', error);
       }
-    }
+    
   };
 
   const handleSearchResults = (results) => {
@@ -408,105 +313,13 @@ const TaskList = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 4, minHeight: '100vh', width: '100%' }}>
-        {/* Header Skeleton */}
-        <Box sx={{ mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Skeleton variant="text" sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, width: 500, mb: 2 }} />
-          <Skeleton variant="text" sx={{ fontSize: '1.5rem', width: 400, mb: 2 }} />
-          <Skeleton variant="text" sx={{ width: 300, mb: 4 }} />
-          <Skeleton variant="rounded" width={180} height={48} />
-        </Box>
-
-        {/* Stats Summary Skeleton */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {[1, 2, 3, 4].map((item) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={item}>
-              <Card sx={{ textAlign: 'center', p: 3 }}>
-                <Skeleton variant="text" sx={{ fontSize: '3rem', mb: 1 }} />
-                <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Search and Controls Skeleton */}
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Grid container spacing={3} alignItems="center">
-            <Grid xs={12} md={6}>
-              <Skeleton variant="rounded" height={56} />
-            </Grid>
-            <Grid xs={12} md={6}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                <Skeleton variant="rounded" width={40} height={40} />
-                <Skeleton variant="rounded" width={40} height={40} />
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {/* Status Tabs Skeleton */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {[1, 2, 3, 4, 5].map((tab) => (
-              <Skeleton key={tab} variant="rounded" width={120} height={48} />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Task Cards Skeleton */}
-        <Grid container spacing={3}>
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <Grid xs={12} md={6} lg={4} key={item}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  mb: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 3,
-                }}
-              >
-                {/* Header with Avatar and Title */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                    <Skeleton variant="circular" width={48} height={48} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" sx={{ fontSize: '1.25rem', mb: 1 }} />
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Skeleton variant="rounded" width={60} height={24} />
-                        <Skeleton variant="rounded" width={80} height={24} />
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Skeleton variant="circular" width={32} height={32} />
-                    <Skeleton variant="circular" width={32} height={32} />
-                    <Skeleton variant="circular" width={32} height={32} />
-                  </Box>
-                </Box>
-
-                {/* Description */}
-                <Skeleton variant="text" sx={{ mb: 1 }} />
-                <Skeleton variant="text" sx={{ width: '80%', mb: 2 }} />
-
-                {/* Footer with Tags and Metadata */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Skeleton variant="rounded" width={50} height={20} />
-                    <Skeleton variant="rounded" width={60} height={20} />
-                    <Skeleton variant="rounded" width={40} height={20} />
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Skeleton variant="text" width={80} />
-                    <Skeleton variant="text" width={60} />
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      <PageLoadingSkeleton
+        showHeader={true}
+        showSearch={true}
+        showStats={true}
+        showCards={true}
+        cardCount={6}
+      />
     );
   }
 
@@ -515,54 +328,19 @@ const TaskList = () => {
   return (
     <Box sx={{ p: 4, minHeight: '100vh', width: '100%' }}>
       {/* Header */}
-      <Box sx={{ mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography
-          variant="h2"
-          fontWeight="800"
-          color="text.primary"
-          gutterBottom
-          sx={{
-            fontSize: { xs: '2.5rem', md: '3.5rem' },
-            mb: 2,
-          }}
-        >
-          Task Management 2025
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{
-            color: 'text.secondary',
-            fontWeight: 400,
-            maxWidth: 600,
-            mb: 4,
-          }}
-        >
-          Professional Project Management System
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            color: 'text.secondary',
-            mb: 4,
-          }}
-        >
-          Complete task schedule from planning to completion
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => navigate('/bugs/new')}
-          size="large"
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: '1rem',
-            fontWeight: 600,
-          }}
-        >
-          Create New Task
-        </Button>
-      </Box>
+      <PageHeader
+        title="Task Management 2025"
+        subtitle="Professional Project Management System"
+        description="Complete task schedule from planning to completion"
+        actions={[
+          {
+            label: "Create New Task",
+            icon: <Add />,
+            onClick: () => navigate('/bugs/new'),
+            variant: "contained"
+          }
+        ]}
+      />
 
       {/* Stats Summary */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

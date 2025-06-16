@@ -43,6 +43,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { SaveFilterDialog, ConfirmDialog, useConfirmDialog } from './common';
 
 const FilterSection = ({
   tasks = [],
@@ -71,6 +72,10 @@ const FilterSection = ({
   // UI state
   const [expanded, setExpanded] = useState(!compact);
   const [savedFilters, setSavedFilters] = useState([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  // Confirm dialog hook for delete operations
+  const { showDeleteConfirm, dialogProps } = useConfirmDialog();
 
   // Available options
   const statusOptions = ['Open', 'In Progress', 'Resolved', 'Closed'];
@@ -207,23 +212,42 @@ const FilterSection = ({
   };
 
   const saveCurrentFilter = () => {
-    const filterName = prompt('Enter a name for this filter:');
-    if (filterName) {
-      const newSavedFilter = {
-        id: Date.now().toString(),
-        name: filterName,
-        filters: { ...filters },
-      };
+    setShowSaveDialog(true);
+  };
+
+  const handleSaveFilter = (saveData) => {
+    const newSavedFilter = {
+      id: Date.now().toString(),
+      name: saveData.name,
+      filters: { ...saveData.filters },
+      isDefault: saveData.makeDefault,
+    };
+
+    if (saveData.overwriteExisting) {
+      setSavedFilters(prev =>
+        prev.map(filter =>
+          filter.name === saveData.name ? newSavedFilter : filter
+        )
+      );
+    } else {
       setSavedFilters(prev => [...prev, newSavedFilter]);
     }
+
+    setShowSaveDialog(false);
   };
 
   const applySavedFilter = (savedFilter) => {
     setFilters(savedFilter.filters);
   };
 
-  const deleteSavedFilter = (filterId) => {
-    setSavedFilters(prev => prev.filter(f => f.id !== filterId));
+  const deleteSavedFilter = (filterId, filterName) => {
+    showDeleteConfirm({
+      title: 'Delete Saved Filter',
+      message: `Are you sure you want to delete the filter "${filterName}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        setSavedFilters(prev => prev.filter(f => f.id !== filterId));
+      }
+    });
   };
 
   const getSeverityColor = (severity) => {
@@ -547,7 +571,7 @@ const FilterSection = ({
                         label={savedFilter.name}
                         icon={<Bookmark />}
                         onClick={() => applySavedFilter(savedFilter)}
-                        onDelete={() => deleteSavedFilter(savedFilter.id)}
+                        onDelete={() => deleteSavedFilter(savedFilter.id, savedFilter.name)}
                         color="secondary"
                         variant="outlined"
                         sx={{
@@ -581,6 +605,18 @@ const FilterSection = ({
           {renderContent()}
         </Card>
       )}
+
+      {/* Save Filter Dialog */}
+      <SaveFilterDialog
+        open={showSaveDialog}
+        onClose={() => setShowSaveDialog(false)}
+        onSave={handleSaveFilter}
+        activeFilters={filters}
+        existingFilterNames={savedFilters.map(f => f.name)}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog {...dialogProps} />
     </LocalizationProvider>
   );
 };
