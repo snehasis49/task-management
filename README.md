@@ -123,13 +123,12 @@ task-management/
 │   │   ├── 📁 services/            # Business logic
 │   │   │   ├── auth_service.py     # Authentication service
 │   │   │   ├── task_service.py     # Task service
-│   │   │   └── groq_service.py     # AI service
+│   │   │   └── ai_service.py       # AI service with Groq integration
 │   │   └── 📁 utils/               # Utility functions
 │   │       └── helpers.py          # Helper functions
 │   ├── 📁 logs/                    # Application logs
 │   ├── 📁 scripts/                 # Utility scripts
 │   ├── main.py                     # FastAPI application entry point
-│   ├── app.py                      # Legacy Flask app (deprecated)
 │   ├── requirements.txt            # Python dependencies
 │   └── .env.example               # Environment variables template
 ├── 📁 frontend/                    # React Frontend
@@ -405,10 +404,12 @@ The dashboard provides:
 
 ### Advanced Features
 
-#### AI-Powered Tagging
-- Groq AI automatically analyzes task content
-- Generates relevant tags for categorization
-- Helps with task organization and filtering
+#### AI-Powered Features (LangChain + Groq)
+- **Smart Tagging**: LangChain with Groq AI automatically analyzes task content and generates relevant tags for categorization
+- **Description Generation**: AI-powered description generator creates detailed task descriptions based on titles using Llama models
+- **Intelligent Templates**: Fallback system provides structured templates when AI is unavailable
+- **Modern Architecture**: Uses LangChain framework for better AI integration and reliability
+- Helps with task organization, filtering, and content creation
 
 #### Search and Filtering
 - **Text Search**: Search by title or description
@@ -440,6 +441,8 @@ The dashboard provides:
 | `GET` | `/api/tasks/{id}` | Get task by ID | ✅ |
 | `PUT` | `/api/tasks/{id}` | Update task | ✅ |
 | `DELETE` | `/api/tasks/{id}` | Delete task | ✅ |
+| `GET` | `/api/tasks/stats` | Get task statistics | ✅ |
+| `POST` | `/api/tasks/generate-description` | Generate AI description | ✅ |
 
 ### User Management Endpoints
 
