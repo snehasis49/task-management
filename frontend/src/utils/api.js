@@ -71,6 +71,7 @@ export const tasksAPI = {
   getStats: () => api.get('/tasks/stats'),
   generateDescription: (title) => api.post('/tasks/generate-description', { title }),
   generateTags: (title, description = '') => api.post('/tasks/generate-tags', { title, description }),
+  searchTasks: (params = {}) => api.get('/tasks/search', { params }),
 };
 
 // Users API

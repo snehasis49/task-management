@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
   Box,
@@ -34,6 +34,27 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  // Inject global styles for drag elements
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      [data-rbd-drag-handle-draggable-id] {
+        z-index: 99999 !important;
+      }
+      [data-rbd-draggable-context-id] {
+        z-index: 99999 !important;
+      }
+      .rbd-drag-handle {
+        z-index: 99999 !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const columns = [
     {
@@ -128,10 +149,13 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
             mb: 2,
             cursor: 'grab',
             transform: snapshot.isDragging ? 'rotate(5deg)' : 'none',
-            boxShadow: snapshot.isDragging 
-              ? theme.shadows[8] 
+            boxShadow: snapshot.isDragging
+              ? theme.shadows[8]
               : theme.shadows[1],
-            transition: 'all 0.2s ease-in-out',
+            transition: snapshot.isDragging ? 'none' : 'all 0.2s ease-in-out',
+            zIndex: snapshot.isDragging ? 99999 : 1,
+            position: snapshot.isDragging ? 'absolute' : 'relative',
+            isolation: snapshot.isDragging ? 'isolate' : 'auto',
             '&:hover': {
               transform: snapshot.isDragging ? 'rotate(5deg)' : 'translateY(-2px)',
               boxShadow: theme.shadows[4],
@@ -280,6 +304,14 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
+      <Box sx={{
+        '& [data-rbd-drag-handle-draggable-id]': {
+          zIndex: '99999 !important',
+        },
+        '& [data-rbd-draggable-context-id]': {
+          zIndex: '99999 !important',
+        }
+      }}>
       <Grid container spacing={3}>
         {columns.map((column) => {
           const columnTasks = tasks.filter(task => task.status === column.id);
@@ -315,12 +347,14 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
                         {...provided.droppableProps}
                         sx={{
                           minHeight: 500,
-                          backgroundColor: snapshot.isDraggingOver 
-                            ? alpha(column.borderColor, 0.1) 
+                          backgroundColor: snapshot.isDraggingOver
+                            ? alpha(column.borderColor, 0.1)
                             : 'transparent',
                           borderRadius: 2,
                           transition: 'background-color 0.2s ease',
                           p: 1,
+                          position: 'relative',
+                          zIndex: snapshot.isDraggingOver ? 9998 : 1,
                         }}
                       >
                         {columnTasks.map((task, index) => (
@@ -336,6 +370,7 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
           );
         })}
       </Grid>
+      </Box>
 
       {/* Task Menu */}
       <Menu

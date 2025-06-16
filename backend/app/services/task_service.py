@@ -4,6 +4,7 @@ from datetime import datetime
 from app.database.connection import get_database
 from app.models.task import TaskCreate, TaskUpdate, TaskInDB, TaskResponse, TaskStatus, TaskSeverity
 from app.services.ai_service import ai_service
+from app.services.embedding_service import embedding_service
 
 
 class TaskService:
@@ -24,6 +25,13 @@ class TaskService:
         # Generate AI tags
         ai_tags = await ai_service.generate_tags(task_data.title, task_data.description)
 
+        # Generate embedding for search
+        embedding = await embedding_service.generate_task_embedding(
+            task_data.title,
+            task_data.description,
+            ai_tags
+        )
+
         task_dict = {
             "title": task_data.title,
             "description": task_data.description,
@@ -31,6 +39,7 @@ class TaskService:
             "status": task_data.status,
             "assigned_to": task_data.assigned_to,
             "tags": ai_tags,
+            "embedding": embedding,
             "created_by": user_id,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
