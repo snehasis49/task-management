@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import Optional, List
-from app.models.task import TaskCreate, TaskUpdate, TaskResponse, TaskStatus, TaskSeverity, DescriptionGenerateRequest, DescriptionGenerateResponse, TagGenerateRequest, TagGenerateResponse
+from app.models.task import TaskCreate, TaskUpdate, TaskResponse, TaskStatus, TaskSeverity, DescriptionGenerateRequest, DescriptionGenerateResponse, TagGenerateRequest, TagGenerateResponse, SearchRequest, SearchResponse, SearchResult
 from app.models.user import TokenData
 from app.services.task_service import task_service
 from app.services.ai_service import ai_service
+from app.services.search_service import search_service
 from app.auth.security import verify_token
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -54,6 +55,62 @@ async def get_task_stats(token_data: TokenData = Depends(verify_token)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve task statistics"
+        )
+
+
+@router.get("/search", response_model=SearchResponse)
+async def search_tasks(
+    query: str = Query(..., min_length=1, max_length=500, description="Search query"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum number of results"),
+    search_type: str = Query(default="intelligent", description="Type of search: keyword, semantic, hybrid, intelligent"),
+    token_data: TokenData = Depends(verify_token)
+):
+    """Search tasks using various search methods including RAG-based semantic search"""
+    try:
+        if search_type == "semantic":
+            results = await search_service.semantic_search(query, limit, user_id=token_data.user_id)
+            enhanced_query = query
+            suggestions = []
+        elif search_type == "keyword":
+            results = await search_service.keyword_search(query, limit, user_id=token_data.user_id)
+            enhanced_query = query
+            suggestions = []
+        elif search_type == "hybrid":
+            results = await search_service.hybrid_search(query, limit, user_id=token_data.user_id)
+            enhanced_query = query
+            suggestions = []
+        else:  # intelligent
+            search_result = await search_service.intelligent_search(query, limit, user_id=token_data.user_id)
+            results = search_result["results"]
+            enhanced_query = search_result["enhanced_query"]
+            suggestions = search_result["suggestions"]
+
+        # Convert results to SearchResult format
+        search_results = []
+        for task_data in results:
+            # Remove embedding from response for performance
+            task_data.pop("embedding", None)
+
+            task = TaskResponse(**task_data)
+            search_result = SearchResult(
+                task=task,
+                similarity_score=task_data.get("similarity_score", 0.0),
+                final_score=task_data.get("final_score", 0.0)
+            )
+            search_results.append(search_result)
+
+        return SearchResponse(
+            results=search_results,
+            enhanced_query=enhanced_query,
+            suggestions=suggestions,
+            total_results=len(search_results),
+            search_type=search_type
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Search failed: {str(e)}"
         )
 
 
@@ -153,3 +210,6 @@ async def generate_tags(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate tags"
         )
+
+
+

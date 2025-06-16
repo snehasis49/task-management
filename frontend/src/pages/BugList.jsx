@@ -1,71 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Typography,
   Box,
-  Card,
-  CardContent,
   Chip,
   Button,
   Tabs,
   Tab,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Menu,
-  MenuItem,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Paper,
   Avatar,
-  Skeleton,
   useTheme,
   alpha,
   Fade,
   Tooltip,
+  Typography,
+  IconButton,
+  TextField,
+  InputAdornment,
+  Card,
 } from '@mui/material';
 import { Grid } from '@mui/system';
 import {
   Add,
-  Search,
-  FilterList,
   Edit,
   Delete,
-  ExpandMore,
   Assignment,
   Schedule,
   Person,
-  LocalOffer,
-  MoreVert,
   Visibility,
   ViewModule,
   TableRows,
+  Search,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { tasksAPI } from '../utils/api';
 import TaskTable from '../components/TaskTable';
+import SearchBar from '../components/SearchBar';
+import FilterSection from '../components/FilterSection';
+import {
+  PageHeader,
+  SearchAndFilterSection,
+  TaskDisplaySection,
+  PageLoadingSkeleton,
+  useTaskFiltering
+} from '../components/common';
 
 const TaskList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const [tasks, setTasks] = useState([]);
-  const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
-  const [selectedPriority, setSelectedPriority] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [allTags, setAllTags] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'cards' or 'table'
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchInfo, setSearchInfo] = useState(null);
+  const [allTags, setAllTags] = useState([]);
+
+  // Use the custom filtering hook
+  const {
+    filteredTasks,
+    showFilters: showAdvancedFilters,
+    handleFiltersChange,
+    activeFilters,
+    setActiveFilters
+  } = useTaskFiltering(tasks);
 
   useEffect(() => {
+    setLoading(true);
     fetchTasks();
-  }, []);
-
-  useEffect(() => {
-    filterTasks();
-  }, [tasks, searchTerm, selectedTab, selectedPriority, selectedTags]);
+  }, [location.pathname]);
 
   const fetchTasks = async () => {
     try {
@@ -88,52 +92,27 @@ const TaskList = () => {
     }
   };
 
-  const filterTasks = () => {
-    let filtered = [...tasks];
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(task =>
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    // Filter by status (tab)
-    const statusFilters = ['All', 'Open', 'In Progress', 'Resolved', 'Closed'];
-    if (selectedTab > 0) {
-      const status = statusFilters[selectedTab];
-      filtered = filtered.filter(task => task.status === status);
-    }
-
-    // Filter by priority
-    if (selectedPriority) {
-      filtered = filtered.filter(task => task.priority === selectedPriority);
-    }
-
-    // Filter by tags
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(task =>
-        task.tags && selectedTags.some(tag => task.tags.includes(tag))
-      );
-    }
-
-    setFilteredTasks(filtered);
-  };
-
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
       try {
         await tasksAPI.deleteTask(taskId);
         fetchTasks(); // Refresh the list
       } catch (error) {
         console.error('Error deleting task:', error);
       }
-    }
+    
+  };
+
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+    setShowSearchResults(results.length > 0);
+  };
+
+  const handleSearchChange = (searchData) => {
+    setSearchInfo(searchData);
   };
 
   const getPriorityColor = (priority) => {
@@ -163,8 +142,8 @@ const TaskList = () => {
     };
 
     filteredTasks.forEach(task => {
-      if (groups[task.priority]) {
-        groups[task.priority].push(task);
+      if (groups[task.severity]) {
+        groups[task.severity].push(task);
       }
     });
 
@@ -195,7 +174,7 @@ const TaskList = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
             <Avatar
               sx={{
-                bgcolor: `${getPriorityColor(task.priority)}.main`,
+                bgcolor: `${getPriorityColor(task.severity)}.main`,
                 width: 48,
                 height: 48,
               }}
@@ -208,8 +187,8 @@ const TaskList = () => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Chip
-                  label={task.priority}
-                  color={getPriorityColor(task.priority)}
+                  label={task.severity}
+                  color={getPriorityColor(task.severity)}
                   size="small"
                   sx={{ fontWeight: 500 }}
                 />
@@ -290,8 +269,13 @@ const TaskList = () => {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!selectedTags.includes(tag)) {
-                    setSelectedTags([...selectedTags, tag]);
+                  // Add tag to filters
+                  const currentTags = activeFilters.tags || [];
+                  if (!currentTags.includes(tag)) {
+                    setActiveFilters(prev => ({
+                      ...prev,
+                      tags: [...currentTags, tag]
+                    }));
                   }
                 }}
               />
@@ -329,105 +313,13 @@ const TaskList = () => {
 
   if (loading) {
     return (
-      <Box sx={{ p: 4, minHeight: '100vh', width: '100%' }}>
-        {/* Header Skeleton */}
-        <Box sx={{ mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Skeleton variant="text" sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, width: 500, mb: 2 }} />
-          <Skeleton variant="text" sx={{ fontSize: '1.5rem', width: 400, mb: 2 }} />
-          <Skeleton variant="text" sx={{ width: 300, mb: 4 }} />
-          <Skeleton variant="rounded" width={180} height={48} />
-        </Box>
-
-        {/* Stats Summary Skeleton */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {[1, 2, 3, 4].map((item) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={item}>
-              <Card sx={{ textAlign: 'center', p: 3 }}>
-                <Skeleton variant="text" sx={{ fontSize: '3rem', mb: 1 }} />
-                <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Search and Controls Skeleton */}
-        <Paper sx={{ p: 3, mb: 4 }}>
-          <Grid container spacing={3} alignItems="center">
-            <Grid xs={12} md={6}>
-              <Skeleton variant="rounded" height={56} />
-            </Grid>
-            <Grid xs={12} md={6}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                <Skeleton variant="rounded" width={40} height={40} />
-                <Skeleton variant="rounded" width={40} height={40} />
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {/* Status Tabs Skeleton */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {[1, 2, 3, 4, 5].map((tab) => (
-              <Skeleton key={tab} variant="rounded" width={120} height={48} />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Task Cards Skeleton */}
-        <Grid container spacing={3}>
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <Grid xs={12} md={6} lg={4} key={item}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  mb: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 3,
-                }}
-              >
-                {/* Header with Avatar and Title */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                    <Skeleton variant="circular" width={48} height={48} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" sx={{ fontSize: '1.25rem', mb: 1 }} />
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Skeleton variant="rounded" width={60} height={24} />
-                        <Skeleton variant="rounded" width={80} height={24} />
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Skeleton variant="circular" width={32} height={32} />
-                    <Skeleton variant="circular" width={32} height={32} />
-                    <Skeleton variant="circular" width={32} height={32} />
-                  </Box>
-                </Box>
-
-                {/* Description */}
-                <Skeleton variant="text" sx={{ mb: 1 }} />
-                <Skeleton variant="text" sx={{ width: '80%', mb: 2 }} />
-
-                {/* Footer with Tags and Metadata */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Skeleton variant="rounded" width={50} height={20} />
-                    <Skeleton variant="rounded" width={60} height={20} />
-                    <Skeleton variant="rounded" width={40} height={20} />
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Skeleton variant="text" width={80} />
-                    <Skeleton variant="text" width={60} />
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      <PageLoadingSkeleton
+        showHeader={true}
+        showSearch={true}
+        showStats={true}
+        showCards={true}
+        cardCount={6}
+      />
     );
   }
 
@@ -436,58 +328,23 @@ const TaskList = () => {
   return (
     <Box sx={{ p: 4, minHeight: '100vh', width: '100%' }}>
       {/* Header */}
-      <Box sx={{ mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography
-          variant="h2"
-          fontWeight="800"
-          color="text.primary"
-          gutterBottom
-          sx={{
-            fontSize: { xs: '2.5rem', md: '3.5rem' },
-            mb: 2,
-          }}
-        >
-          Task Management 2025
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{
-            color: 'text.secondary',
-            fontWeight: 400,
-            maxWidth: 600,
-            mb: 4,
-          }}
-        >
-          Professional Project Management System
-        </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            color: 'text.secondary',
-            mb: 4,
-          }}
-        >
-          Complete task schedule from planning to completion
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => navigate('/bugs/new')}
-          size="large"
-          sx={{
-            px: 4,
-            py: 1.5,
-            fontSize: '1rem',
-            fontWeight: 600,
-          }}
-        >
-          Create New Task
-        </Button>
-      </Box>
+      <PageHeader
+        title="Task Management 2025"
+        subtitle="Professional Project Management System"
+        description="Complete task schedule from planning to completion"
+        actions={[
+          {
+            label: "Create New Task",
+            icon: <Add />,
+            onClick: () => navigate('/bugs/new'),
+            variant: "contained"
+          }
+        ]}
+      />
 
       {/* Stats Summary */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card sx={{ textAlign: 'center', p: 3 }}>
             <Typography variant="h3" fontWeight="700" color="primary.main" sx={{ mb: 1 }}>
               {tasks.length}
@@ -529,33 +386,65 @@ const TaskList = () => {
         </Grid>
       </Grid>
 
-      {/* Search and View Controls */}
+      {/* AI-Powered Search and View Controls */}
       <Paper sx={{ p: 3, mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" fontWeight="600" color="primary.main" sx={{ mb: 2 }}>
+            🔍 AI-Powered Task Search
+          </Typography>
+          <SearchBar
+            onSearchResults={handleSearchResults}
+            onSearchChange={handleSearchChange}
+            placeholder="Search tasks with intelligent semantic understanding..."
+            showSuggestions={true}
+            searchType="intelligent"
+          />
+          {searchInfo && searchInfo.totalResults > 0 && (
+            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Found {searchInfo.totalResults} results
+              </Typography>
+              {searchInfo.enhancedQuery !== searchInfo.query && (
+                <Typography variant="body2" color="primary.main">
+                  • Enhanced with AI
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
+
         <Grid container spacing={3} alignItems="center">
           <Grid xs={12} md={6}>
             <TextField
               fullWidth
-              placeholder="Search tasks by title or description..."
+              placeholder="Traditional keyword search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search color="action" />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search color="action" />
+                    </InputAdornment>
+                  ),
+                }
               }}
+              size="small"
             />
           </Grid>
           <Grid xs={12} md={6}>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center' }}>
               <Box sx={{ display: 'flex', gap: 1 }}>
-                {selectedTags.map((tag, index) => (
+                {activeFilters.tags && activeFilters.tags.map((tag, index) => (
                   <Chip
                     key={index}
                     label={tag}
                     onDelete={() => {
-                      setSelectedTags(selectedTags.filter(t => t !== tag));
+                      const newTags = activeFilters.tags.filter(t => t !== tag);
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        tags: newTags
+                      }));
                     }}
                     color="primary"
                     size="small"
@@ -584,6 +473,14 @@ const TaskList = () => {
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Advanced Filter Section */}
+      <FilterSection
+        tasks={tasks}
+        onFiltersChange={handleFiltersChange}
+        showQuickFilters={true}
+        compact={false}
+      />
 
       {/* Status Tabs */}
       <Box sx={{ mb: 4 }}>
@@ -614,41 +511,84 @@ const TaskList = () => {
       </Box>
 
       {/* Task List */}
-      {filteredTasks.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Assignment sx={{ fontSize: 80, color: 'text.disabled', mb: 3 }} />
-          <Typography variant="h5" color="text.secondary" gutterBottom>
-            No tasks found
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-            {searchTerm || selectedTags.length > 0
-              ? 'Try adjusting your search criteria or filters'
-              : 'No tasks have been created yet. Create your first task!'
-            }
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/bugs/new')}
-            size="large"
-          >
-            Create First Task
-          </Button>
-        </Box>
-      ) : viewMode === 'table' ? (
-        <TaskTable
-          tasks={filteredTasks}
-          onTaskUpdate={fetchTasks}
-          onTaskDelete={handleDeleteTask}
-        />
+      {showSearchResults ? (
+        // Show AI search results
+        searchResults.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Assignment sx={{ fontSize: 80, color: 'text.disabled', mb: 3 }} />
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              No search results found
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              Try different keywords or use the traditional search below
+            </Typography>
+          </Box>
+        ) : viewMode === 'table' ? (
+          <TaskTable
+            tasks={searchResults.map(result => result.task)}
+            onTaskUpdate={fetchTasks}
+            onTaskDelete={handleDeleteTask}
+          />
+        ) : (
+          <Grid container spacing={3}>
+            {searchResults.map((result) => (
+              <Grid xs={12} md={6} lg={4} key={result.task.id || result.task._id}>
+                <Box sx={{ position: 'relative' }}>
+                  {renderTaskCard(result.task)}
+                  <Chip
+                    label={`${Math.round(result.similarity_score * 100)}% match`}
+                    size="small"
+                    color="primary"
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 1,
+                    }}
+                  />
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        )
       ) : (
-        <Grid container spacing={3}>
-          {filteredTasks.map((task) => (
-            <Grid xs={12} md={6} lg={4} key={task.id || task._id}>
-              {renderTaskCard(task)}
-            </Grid>
-          ))}
-        </Grid>
+        // Show filtered tasks (traditional search)
+        filteredTasks.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Assignment sx={{ fontSize: 80, color: 'text.disabled', mb: 3 }} />
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              No tasks found
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              {searchTerm || (activeFilters.tags && activeFilters.tags.length > 0) || showAdvancedFilters
+                ? 'Try adjusting your search criteria or filters'
+                : 'No tasks have been created yet. Create your first task!'
+              }
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/bugs/new')}
+              size="large"
+            >
+              Create First Task
+            </Button>
+          </Box>
+        ) : viewMode === 'table' ? (
+          <TaskTable
+            tasks={filteredTasks}
+            onTaskUpdate={fetchTasks}
+            onTaskDelete={handleDeleteTask}
+          />
+        ) : (
+          <Grid container spacing={3}>
+            {filteredTasks.map((task) => (
+              <Grid xs={12} md={6} lg={4} key={task.id || task._id}>
+                {renderTaskCard(task)}
+              </Grid>
+            ))}
+          </Grid>
+        )
       )}
 
     </Box>

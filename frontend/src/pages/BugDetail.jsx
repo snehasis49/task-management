@@ -88,7 +88,6 @@ const BugDetail = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
       try {
         await tasksAPI.deleteTask(id);
         toast.success('Task deleted successfully!');
@@ -96,7 +95,7 @@ const BugDetail = () => {
       } catch (error) {
         setError('Failed to delete task');
       }
-    }
+    
   };
 
   const handleInputChange = (e) => {
