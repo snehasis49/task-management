@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import TaskList from './pages/BugList';
 import CreateBug from './pages/CreateBug';
 import BugDetail from './pages/BugDetail';
+import Interview from './pages/Interview';
 import 'react-toastify/dist/ReactToastify.css';
 
 
@@ -72,6 +73,13 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <BugDetail />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/interview" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Interview />
                 </AppLayout>
               </ProtectedRoute>
             } />
