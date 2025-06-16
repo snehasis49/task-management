@@ -159,9 +159,11 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
             </Box>
             
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.8rem' }}>
-              {task.description.length > 80 
-                ? `${task.description.substring(0, 80)}...` 
-                : task.description}
+              {task.description
+                ? (task.description.replace(/<[^>]*>/g, '').length > 80
+                  ? `${task.description.replace(/<[^>]*>/g, '').substring(0, 80)}...`
+                  : task.description.replace(/<[^>]*>/g, ''))
+                : 'No description'}
             </Typography>
             
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -214,11 +216,59 @@ const KanbanBoard = ({ tasks, onTaskUpdate, loading }) => {
       <Grid container spacing={3}>
         {columns.map((column) => (
           <Grid size={{ xs: 12, md: 3 }} key={column.id}>
-            <Card sx={{ minHeight: 600 }}>
-              <CardContent>
-                <Skeleton variant="text" sx={{ fontSize: '1.5rem', mb: 2 }} />
+            <Card
+              sx={{
+                minHeight: 600,
+                backgroundColor: alpha(column.bgColor, 0.3),
+                border: `2px solid ${alpha(column.borderColor, 0.3)}`,
+              }}
+            >
+              <CardContent sx={{ p: 2 }}>
+                {/* Column Header Skeleton */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                  <Skeleton variant="circular" width={24} height={24} />
+                  <Skeleton variant="text" sx={{ fontSize: '1.25rem', flex: 1 }} />
+                  <Skeleton variant="rounded" width={30} height={24} />
+                </Box>
+
+                {/* Task Cards Skeleton */}
                 {[1, 2, 3].map((item) => (
-                  <Skeleton key={item} variant="rectangular" height={120} sx={{ mb: 2, borderRadius: 2 }} />
+                  <Card
+                    key={item}
+                    sx={{
+                      mb: 2,
+                      p: 2,
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                    }}
+                  >
+                    {/* Task Header */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Box sx={{ flex: 1 }}>
+                          <Skeleton variant="text" sx={{ fontSize: '1rem', mb: 0.5 }} />
+                          <Skeleton variant="rounded" width={60} height={20} />
+                        </Box>
+                      </Box>
+                      <Skeleton variant="circular" width={24} height={24} />
+                    </Box>
+
+                    {/* Task Description */}
+                    <Skeleton variant="text" sx={{ mb: 1 }} />
+                    <Skeleton variant="text" sx={{ width: '70%', mb: 2 }} />
+
+                    {/* Task Footer */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Skeleton variant="rounded" width={40} height={16} />
+                        <Skeleton variant="rounded" width={50} height={16} />
+                      </Box>
+                      <Skeleton variant="circular" width={24} height={24} />
+                    </Box>
+                  </Card>
                 ))}
               </CardContent>
             </Card>

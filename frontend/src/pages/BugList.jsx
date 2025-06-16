@@ -95,7 +95,7 @@ const TaskList = () => {
     if (searchTerm) {
       filtered = filtered.filter(task =>
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -272,7 +272,7 @@ const TaskList = () => {
             overflow: 'hidden',
           }}
         >
-          {task.description}
+          {task.description ? task.description.replace(/<[^>]*>/g, '') : 'No description'}
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -330,30 +330,100 @@ const TaskList = () => {
   if (loading) {
     return (
       <Box sx={{ p: 4, minHeight: '100vh', width: '100%' }}>
-        <Box sx={{ mb: 4 }}>
-          <Skeleton variant="text" sx={{ fontSize: '2rem', width: 300 }} />
-          <Skeleton variant="text" sx={{ width: 400 }} />
+        {/* Header Skeleton */}
+        <Box sx={{ mb: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Skeleton variant="text" sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, width: 500, mb: 2 }} />
+          <Skeleton variant="text" sx={{ fontSize: '1.5rem', width: 400, mb: 2 }} />
+          <Skeleton variant="text" sx={{ width: 300, mb: 4 }} />
+          <Skeleton variant="rounded" width={180} height={48} />
         </Box>
+
+        {/* Stats Summary Skeleton */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {[1, 2, 3, 4].map((item) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={item}>
+              <Card sx={{ textAlign: 'center', p: 3 }}>
+                <Skeleton variant="text" sx={{ fontSize: '3rem', mb: 1 }} />
+                <Skeleton variant="text" sx={{ fontSize: '1rem' }} />
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Search and Controls Skeleton */}
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid xs={12} md={6}>
+              <Skeleton variant="rounded" height={56} />
+            </Grid>
+            <Grid xs={12} md={6}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                <Skeleton variant="rounded" width={40} height={40} />
+                <Skeleton variant="rounded" width={40} height={40} />
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Status Tabs Skeleton */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {[1, 2, 3, 4, 5].map((tab) => (
+              <Skeleton key={tab} variant="rounded" width={120} height={48} />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Task Cards Skeleton */}
         <Grid container spacing={3}>
           {[1, 2, 3, 4, 5, 6].map((item) => (
             <Grid xs={12} md={6} lg={4} key={item}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  mb: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 3,
+                }}
+              >
+                {/* Header with Avatar and Title */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
                     <Skeleton variant="circular" width={48} height={48} />
                     <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" sx={{ fontSize: '1.25rem' }} />
-                      <Skeleton variant="text" sx={{ width: '60%' }} />
+                      <Skeleton variant="text" sx={{ fontSize: '1.25rem', mb: 1 }} />
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Skeleton variant="rounded" width={60} height={24} />
+                        <Skeleton variant="rounded" width={80} height={24} />
+                      </Box>
                     </Box>
                   </Box>
-                  <Skeleton variant="text" />
-                  <Skeleton variant="text" />
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                    <Skeleton variant="rounded" width={60} height={24} />
-                    <Skeleton variant="rounded" width={80} height={24} />
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Skeleton variant="circular" width={32} height={32} />
+                    <Skeleton variant="circular" width={32} height={32} />
+                    <Skeleton variant="circular" width={32} height={32} />
                   </Box>
-                </CardContent>
-              </Card>
+                </Box>
+
+                {/* Description */}
+                <Skeleton variant="text" sx={{ mb: 1 }} />
+                <Skeleton variant="text" sx={{ width: '80%', mb: 2 }} />
+
+                {/* Footer with Tags and Metadata */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Skeleton variant="rounded" width={50} height={20} />
+                    <Skeleton variant="rounded" width={60} height={20} />
+                    <Skeleton variant="rounded" width={40} height={20} />
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Skeleton variant="text" width={80} />
+                    <Skeleton variant="text" width={60} />
+                  </Box>
+                </Box>
+              </Paper>
             </Grid>
           ))}
         </Grid>

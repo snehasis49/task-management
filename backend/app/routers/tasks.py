@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import Optional, List
-from app.models.task import TaskCreate, TaskUpdate, TaskResponse, TaskStatus, TaskSeverity
+from app.models.task import TaskCreate, TaskUpdate, TaskResponse, TaskStatus, TaskSeverity, DescriptionGenerateRequest, DescriptionGenerateResponse, TagGenerateRequest, TagGenerateResponse
 from app.models.user import TokenData
 from app.services.task_service import task_service
+from app.services.ai_service import ai_service
 from app.auth.security import verify_token
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -106,3 +107,49 @@ async def delete_task(
         )
     
     return {"message": "Task deleted successfully"}
+
+
+@router.post("/generate-description", response_model=DescriptionGenerateResponse)
+async def generate_description(
+    request: DescriptionGenerateRequest,
+    token_data: TokenData = Depends(verify_token)
+):
+    """Generate AI-powered description based on task title using LangChain + Groq"""
+    try:
+        description = await ai_service.generate_description(request.title)
+
+        # Check if AI was used (LangChain ChatGroq client available and description is detailed)
+        generated_by_ai = ai_service.llm is not None and len(description) > 200
+
+        return DescriptionGenerateResponse(
+            description=description,
+            generated_by_ai=generated_by_ai
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate description"
+        )
+
+
+@router.post("/generate-tags", response_model=TagGenerateResponse)
+async def generate_tags(
+    request: TagGenerateRequest,
+    token_data: TokenData = Depends(verify_token)
+):
+    """Generate AI-powered tags based on task title and description using LangChain + Groq"""
+    try:
+        tags = await ai_service.generate_tags(request.title, request.description)
+
+        # Check if AI was used (LangChain ChatGroq client available)
+        generated_by_ai = ai_service.llm is not None
+
+        return TagGenerateResponse(
+            tags=tags,
+            generated_by_ai=generated_by_ai
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate tags"
+        )
