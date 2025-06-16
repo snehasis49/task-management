@@ -184,17 +184,17 @@ const TaskTable = ({ tasks, onTaskUpdate, onTaskDelete }) => {
                   >
                     {task.title}
                   </Typography>
-                  <Typography 
-                    variant="caption" 
+                  <Typography
+                    variant="caption"
                     color="text.secondary"
-                    sx={{ 
+                    sx={{
                       display: '-webkit-box',
                       WebkitLineClamp: 1,
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
                     }}
                   >
-                    {task.description}
+                    {task.description ? task.description.replace(/<[^>]*>/g, '').substring(0, 100) : 'No description'}
                   </Typography>
                 </Box>
               </TableCell>

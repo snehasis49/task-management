@@ -299,3 +299,10 @@ Temporary Items
 *.pb
 models/
 checkpoints/
+
+# Interview preparation files (sensitive information)
+interview.md
+interview_prep.md
+interview_questions.md
+interview_answers.md
+*interview*.md

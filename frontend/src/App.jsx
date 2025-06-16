@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Box } from '@mui/material';
+import { ToastContainer } from 'react-toastify';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CustomThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
@@ -10,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import TaskList from './pages/BugList';
 import CreateBug from './pages/CreateBug';
 import BugDetail from './pages/BugDetail';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -74,6 +76,18 @@ function App() {
               </ProtectedRoute>
             } />
           </Routes>
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+          />
         </Router>
       </AuthProvider>
     </CustomThemeProvider>

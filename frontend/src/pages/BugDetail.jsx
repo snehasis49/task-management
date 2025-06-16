@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -18,7 +18,11 @@ import {
 } from '@mui/material';
 import { Edit, Save, Cancel, Delete, ArrowBack } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { tasksAPI, usersAPI } from '../utils/api';
+import HtmlViewer from '../components/HtmlViewer';
+import RichTextEditor from '../components/RichTextEditor';
+import TagInput from '../components/TagInput';
 
 const BugDetail = () => {
   const { id } = useParams();
@@ -29,7 +33,6 @@ const BugDetail = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [editData, setEditData] = useState({});
 
   useEffect(() => {
@@ -61,14 +64,11 @@ const BugDetail = () => {
 
   const handleEdit = () => {
     setEditing(true);
-    setError('');
-    setSuccess('');
   };
 
   const handleCancel = () => {
     setEditing(false);
     setEditData(bug);
-    setError('');
   };
 
   const handleSave = async () => {
@@ -79,7 +79,7 @@ const BugDetail = () => {
       const response = await tasksAPI.updateTask(id, editData);
       setBug(response.data);
       setEditing(false);
-      setSuccess('Task updated successfully!');
+      toast.success('Task updated successfully!');
     } catch (error) {
       setError(error.response?.data?.detail || 'Failed to update task');
     }
@@ -91,6 +91,7 @@ const BugDetail = () => {
     if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
       try {
         await tasksAPI.deleteTask(id);
+        toast.success('Task deleted successfully!');
         navigate('/bugs');
       } catch (error) {
         setError('Failed to delete task');
@@ -102,6 +103,20 @@ const BugDetail = () => {
     setEditData({
       ...editData,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleDescriptionChange = (content) => {
+    setEditData({
+      ...editData,
+      description: content,
+    });
+  };
+
+  const handleTagsChange = (tags) => {
+    setEditData({
+      ...editData,
+      tags: tags,
     });
   };
 
@@ -177,12 +192,6 @@ const BugDetail = () => {
           </Alert>
         )}
 
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
-
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
           <Typography variant="h4" gutterBottom>
             Bug Details
@@ -252,24 +261,56 @@ const BugDetail = () => {
 
           <Grid size={12}>
             {editing ? (
-              <TextField
-                fullWidth
-                multiline
-                rows={6}
-                label="Description"
-                name="description"
+              <RichTextEditor
                 value={editData.description || ''}
-                onChange={handleInputChange}
-                margin="normal"
+                onChange={handleDescriptionChange}
+                label="Description"
+                placeholder="Detailed description of the task, requirements, and acceptance criteria"
+                taskTitle={editData.title || ''}
+                showAIGenerate={true}
+              />
+            ) : (
+              <HtmlViewer
+                content={bug.description}
+                showLabel={true}
+                label="Description"
+              />
+            )}
+          </Grid>
+
+          <Grid size={12}>
+            {editing ? (
+              <TagInput
+                tags={editData.tags || []}
+                onChange={handleTagsChange}
+                label="Tags"
+                placeholder="Type a tag and press Enter"
+                taskTitle={editData.title || ''}
+                taskDescription={editData.description || ''}
+                showAIGenerate={true}
+                maxTags={10}
               />
             ) : (
               <>
                 <Typography variant="h6" gutterBottom>
-                  Description
+                  Tags
                 </Typography>
-                <Typography variant="body1" paragraph>
-                  {bug.description}
-                </Typography>
+                {bug.tags && bug.tags.length > 0 ? (
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {bug.tags.map((tag, index) => (
+                      <Chip
+                        key={index}
+                        label={tag}
+                        variant="outlined"
+                        color="primary"
+                      />
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No tags assigned
+                  </Typography>
+                )}
               </>
             )}
           </Grid>
@@ -366,23 +407,7 @@ const BugDetail = () => {
             )}
           </Grid>
 
-          {bug.tags && bug.tags.length > 0 && (
-            <Grid size={12}>
-              <Typography variant="h6" gutterBottom>
-                Tags
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {bug.tags.map((tag, index) => (
-                  <Chip
-                    key={index}
-                    label={tag}
-                    variant="outlined"
-                    color="primary"
-                  />
-                ))}
-              </Box>
-            </Grid>
-          )}
+
 
           <Grid size={12}>
             <Divider sx={{ my: 2 }} />

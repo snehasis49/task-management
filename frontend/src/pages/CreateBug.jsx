@@ -14,7 +14,10 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { tasksAPI, usersAPI } from '../utils/api';
+import RichTextEditor from '../components/RichTextEditor';
+import TagInput from '../components/TagInput';
 
 const CreateBug = () => {
   const navigate = useNavigate();
@@ -24,12 +27,11 @@ const CreateBug = () => {
     severity: 'Medium',
     status: 'Open',
     assigned_to: '',
+    tags: [],
   });
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [generatingTags, setGeneratingTags] = useState(false);
   const [generatedTags, setGeneratedTags] = useState([]);
 
   useEffect(() => {
@@ -52,21 +54,34 @@ const CreateBug = () => {
     });
   };
 
+  const handleDescriptionChange = (content) => {
+    setFormData({
+      ...formData,
+      description: content,
+    });
+  };
+
+  const handleTagsChange = (tags) => {
+    setFormData({
+      ...formData,
+      tags: tags,
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
       const response = await tasksAPI.createTask(formData);
-      setSuccess('Task created successfully!');
+      toast.success('Task created successfully!');
       setGeneratedTags(response.data.tags || []);
 
       // Redirect after a short delay
       setTimeout(() => {
         navigate('/bugs');
-      }, 2000);
+      }, 1500);
     } catch (error) {
       setError(error.response?.data?.detail || 'Failed to create task');
     }
@@ -111,21 +126,18 @@ const CreateBug = () => {
           </Alert>
         )}
 
-        {success && (
+        {generatedTags.length > 0 && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-            {generatedTags.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2">
-                  AI-generated tags:
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                  {generatedTags.map((tag, index) => (
-                    <Chip key={index} label={tag} size="small" color="primary" />
-                  ))}
-                </Box>
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2">
+                AI-generated tags:
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                {generatedTags.map((tag, index) => (
+                  <Chip key={index} label={tag} size="small" color="primary" />
+                ))}
               </Box>
-            )}
+            </Box>
           </Alert>
         )}
 
@@ -141,17 +153,24 @@ const CreateBug = () => {
             placeholder="Brief description of the task"
           />
 
-          <TextField
-            fullWidth
-            required
-            multiline
-            rows={4}
-            label="Description"
-            name="description"
+          <RichTextEditor
             value={formData.description}
-            onChange={handleChange}
-            margin="normal"
+            onChange={handleDescriptionChange}
+            label="Description *"
             placeholder="Detailed description of the task, requirements, and acceptance criteria"
+            taskTitle={formData.title}
+            showAIGenerate={true}
+          />
+
+          <TagInput
+            tags={formData.tags}
+            onChange={handleTagsChange}
+            label="Tags"
+            placeholder="Type a tag and press Enter"
+            taskTitle={formData.title}
+            taskDescription={formData.description}
+            showAIGenerate={true}
+            maxTags={10}
           />
 
           <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
@@ -216,7 +235,7 @@ const CreateBug = () => {
             >
               {loading ? <CircularProgress size={24} /> : 'Create Task'}
             </Button>
-            
+
             <Button
               variant="outlined"
               onClick={() => navigate('/bugs')}
