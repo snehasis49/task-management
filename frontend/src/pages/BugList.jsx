@@ -41,35 +41,39 @@ import {
   ViewModule,
   TableRows,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { tasksAPI } from '../utils/api';
 import TaskTable from '../components/TaskTable';
 import SearchBar from '../components/SearchBar';
+import FilterSection from '../components/FilterSection';
 
 const TaskList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
-  const [selectedPriority, setSelectedPriority] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [allTags, setAllTags] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'cards' or 'table'
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchInfo, setSearchInfo] = useState(null);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [allTags, setAllTags] = useState([]);
 
   useEffect(() => {
+    setLoading(true);
     fetchTasks();
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
-    filterTasks();
-  }, [tasks, searchTerm, selectedTab, selectedPriority, selectedTags]);
+    if (tasks.length > 0) {
+      filterTasks();
+    }
+  }, [tasks, searchTerm, selectedTab, activeFilters]);
 
   const fetchTasks = async () => {
     try {
@@ -95,7 +99,7 @@ const TaskList = () => {
   const filterTasks = () => {
     let filtered = [...tasks];
 
-    // Filter by search term
+    // Apply search term from traditional search input
     if (searchTerm) {
       filtered = filtered.filter(task =>
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -103,26 +107,83 @@ const TaskList = () => {
       );
     }
 
-    // Filter by status (tab)
-    const statusFilters = ['All', 'Open', 'In Progress', 'Resolved', 'Closed'];
-    if (selectedTab > 0) {
-      const status = statusFilters[selectedTab];
-      filtered = filtered.filter(task => task.status === status);
-    }
-
-    // Filter by priority
-    if (selectedPriority) {
-      filtered = filtered.filter(task => task.severity === selectedPriority);
-    }
-
-    // Filter by tags
-    if (selectedTags.length > 0) {
+    // Apply search term from FilterSection (takes priority over traditional search)
+    if (activeFilters.searchTerm) {
       filtered = filtered.filter(task =>
-        task.tags && selectedTags.some(tag => task.tags.includes(tag))
+        task.title.toLowerCase().includes(activeFilters.searchTerm.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(activeFilters.searchTerm.toLowerCase()))
       );
     }
 
+    // Apply status filter from FilterSection (takes priority over tabs)
+    if (activeFilters.status && activeFilters.status.length > 0) {
+      filtered = filtered.filter(task => activeFilters.status.includes(task.status));
+    } else {
+      // Only apply tab-based status filter if no FilterSection status filter is active
+      const statusFilters = ['All', 'Open', 'In Progress', 'Resolved', 'Closed'];
+      if (selectedTab > 0) {
+        const status = statusFilters[selectedTab];
+        filtered = filtered.filter(task => task.status === status);
+      }
+    }
+
+    // Apply severity filter from FilterSection
+    if (activeFilters.severity && activeFilters.severity.length > 0) {
+      filtered = filtered.filter(task => activeFilters.severity.includes(task.severity));
+    }
+
+    if (activeFilters.tags && activeFilters.tags.length > 0) {
+      filtered = filtered.filter(task =>
+        task.tags && activeFilters.tags.some(tag => task.tags.includes(tag))
+      );
+    }
+
+    if (activeFilters.assignedTo && activeFilters.assignedTo.length > 0) {
+      filtered = filtered.filter(task => {
+        const assignee = task.assigned_to || task.assignedTo;
+        if (activeFilters.assignedTo.includes('unassigned')) {
+          return !assignee || activeFilters.assignedTo.includes(assignee);
+        }
+        return assignee && activeFilters.assignedTo.includes(assignee);
+      });
+    }
+
+    // Apply date filters
+    if (activeFilters.createdDateFrom || activeFilters.createdDateTo) {
+      filtered = filtered.filter(task => {
+        const taskDate = new Date(task.createdAt || task.created_at);
+        if (activeFilters.createdDateFrom && taskDate < activeFilters.createdDateFrom) return false;
+        if (activeFilters.createdDateTo && taskDate > activeFilters.createdDateTo) return false;
+        return true;
+      });
+    }
+
+    if (activeFilters.updatedDateFrom || activeFilters.updatedDateTo) {
+      filtered = filtered.filter(task => {
+        const taskDate = new Date(task.updatedAt || task.updated_at);
+        if (activeFilters.updatedDateFrom && taskDate < activeFilters.updatedDateFrom) return false;
+        if (activeFilters.updatedDateTo && taskDate > activeFilters.updatedDateTo) return false;
+        return true;
+      });
+    }
+
+
+
     setFilteredTasks(filtered);
+
+    // Check if any FilterSection filters are active
+    const hasActiveFilters = Object.keys(activeFilters).some(key => {
+      if (Array.isArray(activeFilters[key])) {
+        return activeFilters[key].length > 0;
+      }
+      return activeFilters[key] && activeFilters[key] !== '';
+    });
+
+    setShowAdvancedFilters(hasActiveFilters);
+  };
+
+  const handleFiltersChange = (filters) => {
+    setActiveFilters(filters);
   };
 
   const handleTabChange = (event, newValue) => {
@@ -303,8 +364,13 @@ const TaskList = () => {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!selectedTags.includes(tag)) {
-                    setSelectedTags([...selectedTags, tag]);
+                  // Add tag to filters
+                  const currentTags = activeFilters.tags || [];
+                  if (!currentTags.includes(tag)) {
+                    setActiveFilters(prev => ({
+                      ...prev,
+                      tags: [...currentTags, tag]
+                    }));
                   }
                 }}
               />
@@ -576,12 +642,14 @@ const TaskList = () => {
               placeholder="Traditional keyword search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search color="action" />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search color="action" />
+                    </InputAdornment>
+                  ),
+                }
               }}
               size="small"
             />
@@ -589,12 +657,16 @@ const TaskList = () => {
           <Grid xs={12} md={6}>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' }, alignItems: 'center' }}>
               <Box sx={{ display: 'flex', gap: 1 }}>
-                {selectedTags.map((tag, index) => (
+                {activeFilters.tags && activeFilters.tags.map((tag, index) => (
                   <Chip
                     key={index}
                     label={tag}
                     onDelete={() => {
-                      setSelectedTags(selectedTags.filter(t => t !== tag));
+                      const newTags = activeFilters.tags.filter(t => t !== tag);
+                      setActiveFilters(prev => ({
+                        ...prev,
+                        tags: newTags
+                      }));
                     }}
                     color="primary"
                     size="small"
@@ -623,6 +695,14 @@ const TaskList = () => {
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Advanced Filter Section */}
+      <FilterSection
+        tasks={tasks}
+        onFiltersChange={handleFiltersChange}
+        showQuickFilters={true}
+        compact={false}
+      />
 
       {/* Status Tabs */}
       <Box sx={{ mb: 4 }}>
@@ -673,7 +753,7 @@ const TaskList = () => {
           />
         ) : (
           <Grid container spacing={3}>
-            {searchResults.map((result, index) => (
+            {searchResults.map((result) => (
               <Grid xs={12} md={6} lg={4} key={result.task.id || result.task._id}>
                 <Box sx={{ position: 'relative' }}>
                   {renderTaskCard(result.task)}
@@ -702,7 +782,7 @@ const TaskList = () => {
               No tasks found
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              {searchTerm || selectedTags.length > 0
+              {searchTerm || (activeFilters.tags && activeFilters.tags.length > 0) || showAdvancedFilters
                 ? 'Try adjusting your search criteria or filters'
                 : 'No tasks have been created yet. Create your first task!'
               }
