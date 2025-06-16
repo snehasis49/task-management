@@ -204,7 +204,7 @@ const TaskTable = ({ tasks, onTaskUpdate, onTaskDelete }) => {
               </TableCell>
               
               <TableCell>
-                {getPriorityChip(task.priority)}
+                {getPriorityChip(task.severity)}
               </TableCell>
               
               <TableCell>

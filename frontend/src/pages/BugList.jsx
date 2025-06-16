@@ -44,6 +44,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { tasksAPI } from '../utils/api';
 import TaskTable from '../components/TaskTable';
+import SearchBar from '../components/SearchBar';
 
 const TaskList = () => {
   const navigate = useNavigate();
@@ -58,6 +59,9 @@ const TaskList = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'cards' or 'table'
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchInfo, setSearchInfo] = useState(null);
 
   useEffect(() => {
     fetchTasks();
@@ -108,7 +112,7 @@ const TaskList = () => {
 
     // Filter by priority
     if (selectedPriority) {
-      filtered = filtered.filter(task => task.priority === selectedPriority);
+      filtered = filtered.filter(task => task.severity === selectedPriority);
     }
 
     // Filter by tags
@@ -134,6 +138,15 @@ const TaskList = () => {
         console.error('Error deleting task:', error);
       }
     }
+  };
+
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+    setShowSearchResults(results.length > 0);
+  };
+
+  const handleSearchChange = (searchData) => {
+    setSearchInfo(searchData);
   };
 
   const getPriorityColor = (priority) => {
@@ -163,8 +176,8 @@ const TaskList = () => {
     };
 
     filteredTasks.forEach(task => {
-      if (groups[task.priority]) {
-        groups[task.priority].push(task);
+      if (groups[task.severity]) {
+        groups[task.severity].push(task);
       }
     });
 
@@ -195,7 +208,7 @@ const TaskList = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
             <Avatar
               sx={{
-                bgcolor: `${getPriorityColor(task.priority)}.main`,
+                bgcolor: `${getPriorityColor(task.severity)}.main`,
                 width: 48,
                 height: 48,
               }}
@@ -208,8 +221,8 @@ const TaskList = () => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Chip
-                  label={task.priority}
-                  color={getPriorityColor(task.priority)}
+                  label={task.severity}
+                  color={getPriorityColor(task.severity)}
                   size="small"
                   sx={{ fontWeight: 500 }}
                 />
@@ -487,7 +500,7 @@ const TaskList = () => {
 
       {/* Stats Summary */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card sx={{ textAlign: 'center', p: 3 }}>
             <Typography variant="h3" fontWeight="700" color="primary.main" sx={{ mb: 1 }}>
               {tasks.length}
@@ -529,13 +542,38 @@ const TaskList = () => {
         </Grid>
       </Grid>
 
-      {/* Search and View Controls */}
+      {/* AI-Powered Search and View Controls */}
       <Paper sx={{ p: 3, mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" fontWeight="600" color="primary.main" sx={{ mb: 2 }}>
+            🔍 AI-Powered Task Search
+          </Typography>
+          <SearchBar
+            onSearchResults={handleSearchResults}
+            onSearchChange={handleSearchChange}
+            placeholder="Search tasks with intelligent semantic understanding..."
+            showSuggestions={true}
+            searchType="intelligent"
+          />
+          {searchInfo && searchInfo.totalResults > 0 && (
+            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Found {searchInfo.totalResults} results
+              </Typography>
+              {searchInfo.enhancedQuery !== searchInfo.query && (
+                <Typography variant="body2" color="primary.main">
+                  • Enhanced with AI
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
+
         <Grid container spacing={3} alignItems="center">
           <Grid xs={12} md={6}>
             <TextField
               fullWidth
-              placeholder="Search tasks by title or description..."
+              placeholder="Traditional keyword search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -545,6 +583,7 @@ const TaskList = () => {
                   </InputAdornment>
                 ),
               }}
+              size="small"
             />
           </Grid>
           <Grid xs={12} md={6}>
@@ -614,41 +653,84 @@ const TaskList = () => {
       </Box>
 
       {/* Task List */}
-      {filteredTasks.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Assignment sx={{ fontSize: 80, color: 'text.disabled', mb: 3 }} />
-          <Typography variant="h5" color="text.secondary" gutterBottom>
-            No tasks found
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-            {searchTerm || selectedTags.length > 0
-              ? 'Try adjusting your search criteria or filters'
-              : 'No tasks have been created yet. Create your first task!'
-            }
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/bugs/new')}
-            size="large"
-          >
-            Create First Task
-          </Button>
-        </Box>
-      ) : viewMode === 'table' ? (
-        <TaskTable
-          tasks={filteredTasks}
-          onTaskUpdate={fetchTasks}
-          onTaskDelete={handleDeleteTask}
-        />
+      {showSearchResults ? (
+        // Show AI search results
+        searchResults.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Assignment sx={{ fontSize: 80, color: 'text.disabled', mb: 3 }} />
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              No search results found
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              Try different keywords or use the traditional search below
+            </Typography>
+          </Box>
+        ) : viewMode === 'table' ? (
+          <TaskTable
+            tasks={searchResults.map(result => result.task)}
+            onTaskUpdate={fetchTasks}
+            onTaskDelete={handleDeleteTask}
+          />
+        ) : (
+          <Grid container spacing={3}>
+            {searchResults.map((result, index) => (
+              <Grid xs={12} md={6} lg={4} key={result.task.id || result.task._id}>
+                <Box sx={{ position: 'relative' }}>
+                  {renderTaskCard(result.task)}
+                  <Chip
+                    label={`${Math.round(result.similarity_score * 100)}% match`}
+                    size="small"
+                    color="primary"
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 1,
+                    }}
+                  />
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        )
       ) : (
-        <Grid container spacing={3}>
-          {filteredTasks.map((task) => (
-            <Grid xs={12} md={6} lg={4} key={task.id || task._id}>
-              {renderTaskCard(task)}
-            </Grid>
-          ))}
-        </Grid>
+        // Show filtered tasks (traditional search)
+        filteredTasks.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Assignment sx={{ fontSize: 80, color: 'text.disabled', mb: 3 }} />
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              No tasks found
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              {searchTerm || selectedTags.length > 0
+                ? 'Try adjusting your search criteria or filters'
+                : 'No tasks have been created yet. Create your first task!'
+              }
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/bugs/new')}
+              size="large"
+            >
+              Create First Task
+            </Button>
+          </Box>
+        ) : viewMode === 'table' ? (
+          <TaskTable
+            tasks={filteredTasks}
+            onTaskUpdate={fetchTasks}
+            onTaskDelete={handleDeleteTask}
+          />
+        ) : (
+          <Grid container spacing={3}>
+            {filteredTasks.map((task) => (
+              <Grid xs={12} md={6} lg={4} key={task.id || task._id}>
+                {renderTaskCard(task)}
+              </Grid>
+            ))}
+          </Grid>
+        )
       )}
 
     </Box>
