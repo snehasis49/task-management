@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    include: ['react-simple-wysiwyg', 'dompurify']
+    include: []
   },
   server: {
     fs: {

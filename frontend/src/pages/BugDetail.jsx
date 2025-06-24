@@ -20,7 +20,6 @@ import { Edit, Save, Cancel, Delete, ArrowBack } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { tasksAPI, usersAPI } from '../utils/api';
-import HtmlViewer from '../components/HtmlViewer';
 import RichTextEditor from '../components/RichTextEditor';
 import TagInput from '../components/TagInput';
 
@@ -267,12 +266,13 @@ const BugDetail = () => {
                 placeholder="Detailed description of the task, requirements, and acceptance criteria"
                 taskTitle={editData.title || ''}
                 showAIGenerate={true}
+                markdownView={false}
               />
             ) : (
-              <HtmlViewer
-                content={bug.description}
-                showLabel={true}
+              <RichTextEditor
+                value={bug.description || ''}
                 label="Description"
+                markdownView={true}
               />
             )}
           </Grid>

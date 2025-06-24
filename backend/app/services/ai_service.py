@@ -145,14 +145,16 @@ Tags:""")
 4. Expected outcomes and deliverables
 5. Implementation guidelines
 
-Format the response in clean HTML with proper structure using:
-- <p> for paragraphs
-- <ul>/<li> for lists
-- <strong> for emphasis
+Format the response in clean Markdown (not HTML). Use:
+- #, ##, ### for headings
+- - or * for lists
+- ** for bold
+- _ for italics
+- Backticks for code if needed
 - Keep it between 150-400 words
 - Make it actionable and specific
 
-IMPORTANT: Return ONLY the HTML content. Do not include any reasoning, thinking process, or explanations. Just the formatted HTML description.""")
+IMPORTANT: Return ONLY the Markdown content. Do not include any reasoning, thinking process, or explanations. Just the formatted Markdown description.""")
 
             human_message = HumanMessage(content=f"""Generate a detailed task description for:
 
