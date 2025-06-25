@@ -297,7 +297,9 @@ Temporary Items
 *.joblib
 *.h5
 *.pb
-models/
+*/models/*.pkl
+*.h5
+*.joblib
 checkpoints/
 
 # Interview preparation files (sensitive information)
