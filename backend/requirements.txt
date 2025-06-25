@@ -17,7 +17,10 @@ langchain
 langchain-groq
 
 pydantic
+email-validator
 pydantic-settings
 sentence-transformers
 numpy --only-binary=:all:
 scikit-learn
+
+werkzeug
